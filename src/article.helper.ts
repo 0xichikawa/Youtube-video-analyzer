@@ -12,7 +12,7 @@ const openai = new OpenAI({
  * @param url - The URL of the article.  
  * @returns A promise resolving to the extracted article content.  
  */
-export async function fetchArticleContent(url: string): Promise<string> {
+async function fetchArticleContent(url: string): Promise<string> {
   try {
     const response = await axios.get(url);
 
@@ -42,8 +42,10 @@ export async function fetchArticleContent(url: string): Promise<string> {
  * @param content - The text content of the article.  
  * @returns A promise resolving to an array of legal rules.  
  */
-export async function extractLegalRules(content: string): Promise<string[]> {
+export async function extractLegalRules(articleUrl: string): Promise<string[]> {
   try {
+    const content = await fetchArticleContent(articleUrl);
+
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
