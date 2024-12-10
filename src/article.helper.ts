@@ -2,14 +2,6 @@ import axios from "axios";
 import * as cheerio from "cheerio"; // For extracting text from HTML  
 import OpenAI from 'openai'; // Default import  
 
-import * as dotenv from 'dotenv';
-dotenv.config();
-
-// Ensure your OpenAI API key is defined  
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("Missing OpenAI API key");
-}
-
 // Initialize OpenAI  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

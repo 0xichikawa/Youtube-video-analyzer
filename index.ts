@@ -3,36 +3,13 @@ import * as path from "path";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { downloadVideo } from "./src/youtube.helpers";
-import { transcribeAudio } from "./src/deepgram.helpers";
+import { processVideo } from "./src/deepgram.helpers";
 import { fetchArticleContent, extractLegalRules } from "./src/article.helper";
+import { analyzeTranscriptsInChunks } from "./src/llm";
 
-async function processVideo(videoUrl: string): Promise<void> {
+async function main(videoUrl: string, articleUrl: string): Promise<void> {
   try {
-    console.log(`Processing video ${videoUrl}...`);
-
-    const { audioPath, videoId } = await downloadVideo(videoUrl);
-    console.log(`Audio downloaded for ${videoId}`);
-
-    const transcription = await transcribeAudio(audioPath);
-
-    const outputPath = path.join(__dirname, "data", `${videoId}.json`);
-    await fs.promises.writeFile(
-      outputPath,
-      JSON.stringify(transcription, null, 2)
-    );
-
-    console.log(`Transcription completed and saved to ${outputPath}`);
-  } catch (error) {
-    console.error(`Error processing video ${videoUrl}:`, error);
-  }
-}
-
-async function main(videoUrls: string[], articleUrl: string): Promise<void> {
-  try {
-    for (const url of videoUrls) {
-      await processVideo(url);
-    }
+    const transcription  = await processVideo(videoUrl);
     console.log("All videos processed successfully!");
 
     const content = await fetchArticleContent(articleUrl);
@@ -40,12 +17,20 @@ async function main(videoUrls: string[], articleUrl: string): Promise<void> {
     const extractedRules = await extractLegalRules(content);
     console.log("Extracted Legal Rules:", extractedRules);
 
+    const analysisResults = await analyzeTranscriptsInChunks(transcription.utterances, extractedRules);
+    console.log("Analysis Results:", analysisResults);
+    // Save results to JSON file
+    const outputPath = path.join(__dirname, "data", "violated_utterances.json");
+    await fs.promises.writeFile(outputPath, JSON.stringify(analysisResults, null, 2));
+
+    console.log(`Analysis results saved to ${outputPath}`);
+
   } catch (error) {
     console.error("Error in main process:", error);
   }
 }
 
-const videoUrls = ["https://www.youtube.com/watch?v=nW6JEbEG7c4"];
+const videoUrl = "https://www.youtube.com/watch?v=nW6JEbEG7c4";
 const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";
 
-main(videoUrls, articleUrl);
+main(videoUrl, articleUrl);
