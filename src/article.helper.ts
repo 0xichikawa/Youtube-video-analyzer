@@ -58,7 +58,7 @@ export async function extractLegalRules(content: string): Promise<string[]> {
         { role: "system", content: "You are a legal assistant." },
         {
           role: "user",
-          content: `Summarize the main legal principles from this article in bullet points:\n\n${content}`,
+          content: `Summarize the main legal principles from this article in bullet points in Czech:\n\n${content}`,
         },
       ],
     });
