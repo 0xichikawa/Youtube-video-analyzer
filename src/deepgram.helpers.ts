@@ -91,7 +91,7 @@ export async function processVideo(videoUrl: string): Promise<TranscriptionResul
 
     const transcription = await transcribeAudio(audioPath);
 
-    const outputPath = path.join(__dirname, "data", `${videoId}.json`);
+    const outputPath = path.join(__dirname, "..","data", `${videoId}.json`);
     await fs.promises.writeFile(
       outputPath,
       JSON.stringify(transcription, null, 2)
