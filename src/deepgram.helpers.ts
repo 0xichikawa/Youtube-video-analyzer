@@ -1,5 +1,7 @@
 import { createClient, PrerecordedSchema } from "@deepgram/sdk";
 import * as fs from "fs";
+import * as path from "path";
+import { downloadVideo } from "./youtube.helpers";
 
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 
@@ -16,7 +18,7 @@ interface TranscriptionResult {
   }>;
 }
 
-export async function transcribeAudio(
+async function transcribeAudio(
   audioPath: string
 ): Promise<TranscriptionResult> {
   try {
@@ -76,6 +78,30 @@ export async function transcribeAudio(
     };
   } catch (error) {
     console.error("Error in transcription:", error);
+    throw error;
+  }
+}
+
+export async function processVideo(videoUrl: string): Promise<TranscriptionResult> {
+  try {
+    console.log(`Processing video ${videoUrl}...`);
+
+    const { audioPath, videoId } = await downloadVideo(videoUrl);
+    console.log(`Audio downloaded for ${videoId}`);
+
+    const transcription = await transcribeAudio(audioPath);
+
+    const outputPath = path.join(__dirname, "data", `${videoId}.json`);
+    await fs.promises.writeFile(
+      outputPath,
+      JSON.stringify(transcription, null, 2)
+    );
+
+    console.log(`Transcription completed and saved to ${outputPath}`);
+
+    return transcription ;
+  } catch (error) {
+    console.error(`Error processing video ${videoUrl}:`, error);
     throw error;
   }
 }
