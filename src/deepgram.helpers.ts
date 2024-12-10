@@ -87,96 +87,103 @@ const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 //   }
 // }
 
-interface Word {  
+interface Word {
   word: string;         // The word text  
   start: number;       // Start timestamp of the word (in seconds)  
   end: number;         // End timestamp of the word (in seconds)  
   confidence: number;  // Confidence score for the word  
-}  
+}
 
-interface Sentence {  
+interface Sentence {
   text: string;         // The sentence text  
   start: number;       // Start timestamp (in seconds)  
   end: number;         // End timestamp (in seconds)  
-}  
+}
 
-interface Paragraph {  
+interface Paragraph {
   text: string;             // The paragraph text  
   start: number;           // Start timestamp (in seconds)  
   end: number;             // End timestamp (in seconds)  
   confidence: number;      // Overall confidence score for the paragraph  
   sentences: Sentence[];    // List of sentences in the paragraph  
-}  
+}
 
-interface TranscriptionResult {  
+interface TranscriptionResult {
   transcript: string;       // The complete transcript of the audio  
   paragraphs: Paragraph[];   // Array of paragraphs  
-}  
+}
 
 /**  
  * Function to transcribe an audio file and return a structured response.  
  * @param audioPath - The path to the audio file to be transcribed.  
  * @returns A promise that resolves to an object containing the transcript and its structured details.  
- */  
-async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> {  
-  try {  
-    const audioFile = fs.readFileSync(audioPath);  
-    console.log(`Transcribing audio file: ${audioPath}`);  
+ */
+async function transcribeAudio(audioPath: string): Promise<void> {
+  try {
+    const audioFile = fs.readFileSync(audioPath);
 
-    const transcription = await deepgram.transcription.preRecorded({  
-      buffer: audioFile,  
-      mimetype: 'audio/wav',  
-      options: {  
-        model: 'general',  
-        language: 'en',  
-        punctuate: true,  
-        diarize: true,  
-        paragraphs: true,  
-        multichannel: false,  
-      },  
-    });  
+    const transcriptionOptions: PrerecordedSchema = {
+      model: "nova-2-general",
+      language: "cs",
+      smart_format: false,
+      diarize: true,
+      paragraphs: true,
+      punctuate: true,
+      multichannel: false,
+    };
 
-    const transcript = transcription.results.channels[0].alternatives[0].transcript;  
-    const paragraphs = transcription.results.channels[0].alternatives[0].paragraphs.paragraphs.map((paragraph: any) => ({  
-      text: paragraph.text,  
-      start: paragraph.start,  
-      end: paragraph.end,  
-      confidence: paragraph.confidence,  
-      sentences: paragraph.sentences.map((sentence: any) => ({  
-        text: sentence.text,  
-        start: sentence.start,  
-        end: sentence.end,  
-      })),  
-    }));  
+    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+      audioFile,
+      transcriptionOptions
+    );
 
-    return {  
-      transcript,  
-      paragraphs,  
-    };  
-  } catch (error) {  
-    console.error("Error in transcription:", error);  
-    throw error;  
-  }  
-}   
+    if (error) {
+      throw new Error(`Deepgram transcription error: ${error}`);
+    }
 
-export async function processVideo(videoUrl: string): Promise<TranscriptionResult> {
+    console.log("Transcription result:", result);
+
+    // const transcript = result.results.channels?.[0]?.alternatives?.[0]?.transcript;
+    // const paragraphs = result.results.channels[0].alternatives[0].paragraphs.paragraphs.map((paragraph: any) => ({
+    //   text: paragraph.text,
+    //   start: paragraph.start,
+    //   end: paragraph.end,
+    //   confidence: paragraph.confidence,
+    //   sentences: paragraph.sentences.map((sentence: any) => ({
+    //     text: sentence.text,
+    //     start: sentence.start,
+    //     end: sentence.end,
+    //   })),
+    // }));
+
+    // return {
+    //   transcript,
+    //   paragraphs,
+    // };
+  } catch (error) {
+    console.error("Error in transcription:", error);
+    throw error;
+  }
+}
+
+export async function processVideo(videoUrl: string): Promise<void> {
   try {
     console.log(`Processing video ${videoUrl}...`);
 
     const { audioPath, videoId } = await downloadVideo(videoUrl);
     console.log(`Audio downloaded for ${videoId}`);
 
-    const transcription = await transcribeAudio(audioPath);
+    // const transcription = await transcribeAudio(audioPath);
 
-    const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);
-    await fs.promises.writeFile(
-      outputPath,
-      JSON.stringify(transcription, null, 2)
-    );
+    // const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);
+    // await fs.promises.writeFile(
+    //   outputPath,
+    //   JSON.stringify(transcription, null, 2)
+    // );
 
-    console.log(`Transcription completed and saved to ${outputPath}`);
+    // console.log(`Transcription completed and saved to ${outputPath}`);
 
-    return transcription;
+    // return transcription;
   } catch (error) {
     console.error(`Error processing video ${videoUrl}:`, error);
     throw error;

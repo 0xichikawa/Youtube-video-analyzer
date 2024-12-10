@@ -10,10 +10,11 @@ import { analyzeTranscriptsInChunks } from "./src/llm";
 async function main(videoUrl: string, articleUrl: string): Promise<void> {
   try {
     const transcription  = await processVideo(videoUrl);
+    console.log("Transcription---------->", transcription);
     console.log("All videos processed successfully!");
 
-    const extractedRules = await extractLegalRules(articleUrl);
-    console.log("Extracted Legal Rules:", extractedRules);
+    // const extractedRules = await extractLegalRules(articleUrl);
+    // console.log("Extracted Legal Rules:", extractedRules);
 
     // const analysisResults = await analyzeTranscriptsInChunks(transcription.paragraphs, extractedRules);
     // console.log("Analysis Results:", analysisResults);
