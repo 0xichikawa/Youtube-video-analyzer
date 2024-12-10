@@ -52,7 +52,7 @@ export async function extractLegalRules(articleUrl: string): Promise<string[]> {
         { role: "system", content: "You are a legal assistant." },
         {
           role: "user",
-          content: `Summarize the main legal principles from this article in bullet points in Czech:\n\n${content}`,
+          content: `Summarize the main legal principles from this article in detail in Czech:\n\n${content}`,
         },
       ],
     });

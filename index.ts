@@ -15,13 +15,13 @@ async function main(videoUrl: string, articleUrl: string): Promise<void> {
     const extractedRules = await extractLegalRules(articleUrl);
     console.log("Extracted Legal Rules:", extractedRules);
 
-    const analysisResults = await analyzeTranscriptsInChunks(transcription.utterances, extractedRules);
-    console.log("Analysis Results:", analysisResults);
-    // Save results to JSON file
-    const outputPath = path.join(__dirname, "data", "violated_utterances.json");
-    await fs.promises.writeFile(outputPath, JSON.stringify(analysisResults, null, 2));
+    // const analysisResults = await analyzeTranscriptsInChunks(transcription.paragraphs, extractedRules);
+    // console.log("Analysis Results:", analysisResults);
+    // // Save results to JSON file
+    // const outputPath = path.join(__dirname, "data", "violated_paragraphs.json");
+    // await fs.promises.writeFile(outputPath, JSON.stringify(analysisResults, null, 2));
 
-    console.log(`Analysis results saved to ${outputPath}`);
+    // console.log(`Analysis results saved to ${outputPath}`);
 
   } catch (error) {
     console.error("Error in main process:", error);

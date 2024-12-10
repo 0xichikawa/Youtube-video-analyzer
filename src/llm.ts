@@ -32,13 +32,15 @@ const openai = new OpenAI({
 // Function to analyze transcripts in chunks  
 export async function analyzeTranscriptsInChunks(chunks: Chunk[], legalRules: string[]): Promise<AnalysisResult[]> {
   const results: AnalysisResult[] = [];
+  console.log(`Legal Rules: ${legalRules.join(", ")}`);
 
   for (const chunk of chunks) {
     const { text } = chunk;
+    console.log(`Analyzing chunk: ${text}`);
 
     // Create a prompt for OpenAI  
     const prompt = `  
-      You are a legal assistant. Check if the following statement contains any violations of legal rules:  
+      You are a legal assistant. Check if the following statement contains any violations of legal rules in detail:  
       Statement: "${text}"  
       Legal Rules: ${legalRules.join(", ")}  
       Please respond with "Violation" if there is a violation and "No Violation" if there isn't.  
