@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { processVideo } from "./src/deepgram.helpers";
-import { fetchArticleContent, extractLegalRules } from "./src/article.helper";
+import { extractLegalRules } from "./src/article.helper";
 import { analyzeTranscriptsInChunks } from "./src/llm";
 
 async function main(videoUrl: string, articleUrl: string): Promise<void> {
@@ -12,15 +12,13 @@ async function main(videoUrl: string, articleUrl: string): Promise<void> {
     const transcription  = await processVideo(videoUrl);
     console.log("All videos processed successfully!");
 
-    const content = await fetchArticleContent(articleUrl);
-    console.log("Fetched Article content:", content);
-    const extractedRules = await extractLegalRules(content);
+    const extractedRules = await extractLegalRules(articleUrl);
     console.log("Extracted Legal Rules:", extractedRules);
 
     const analysisResults = await analyzeTranscriptsInChunks(transcription.utterances, extractedRules);
     console.log("Analysis Results:", analysisResults);
     // Save results to JSON file
-    const outputPath = path.join(__dirname, "data", "violated_utterances.json");
+    const outputPath = path.join(__dirname, "src/data", "violated_utterances.json");
     await fs.promises.writeFile(outputPath, JSON.stringify(analysisResults, null, 2));
 
     console.log(`Analysis results saved to ${outputPath}`);
