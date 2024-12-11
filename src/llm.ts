@@ -1,81 +1,81 @@
-import OpenAI from "openai";
+import OpenAI from "openai";  
 
-interface Chunk {
-  text: string;
-  start: number;
-  end: number;
-  confidence: number;
-  words: Word[];
-}
+interface Paragraph {  
+  sentences: Sentence[];  
+  speaker: number;  
+  num_words: number;  
+  start: number;  
+  end: number;  
+}  
 
-interface Word {
-  word: string;
-  start: number;
-  end: number;
-  confidence: number;
-  speaker: number;
-  speaker_confidence: number;
-  punctuated_word: string;
-}
+interface Sentence {  
+  text: string;  
+  start: number;  
+  end: number;  
+}  
 
-interface AnalysisResult {
-  transcript: string;
-  violationCheck: "Violation" | "No Violation" | undefined; // Restricting to specific strings  
-  start: number;
-  end: number;
-}
+interface AnalysisResult {  
+  transcript: string;  
+  violationCheck: "Violation"; // Restricting to only "Violation" because we only need violated sentences  
+  start: number;  
+  end: number;  
+}  
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({  
+  apiKey: process.env.OPENAI_API_KEY,  
+});  
 
-// Function to analyze transcripts in chunks  
-export async function analyzeTranscriptsInChunks(chunks: Chunk[], legalRules: string[]): Promise<AnalysisResult[]> {
-  const results: AnalysisResult[] = [];
-  console.log(`Legal Rules: ${legalRules.join(", ")}`);
+// Function to analyze transcripts in paragraphs  
+export async function analyzeTranscriptsInChunks(paragraphs: Paragraph[], legalRules: string[]): Promise<AnalysisResult[]> {  
+  const results: AnalysisResult[] = [];  
 
-  for (const chunk of chunks) {
-    const { text } = chunk;
-    console.log(`Analyzing chunk: ${text}`);
+  for (const paragraph of paragraphs) {  
+    const { sentences } = paragraph;  
 
-    // Create a prompt for OpenAI  
-    const prompt = `  
-      You are a legal assistant. Check if the following statement contains any violations of legal rules in detail:  
-      Statement: "${text}"  
-      Legal Rules: ${legalRules.join(", ")}  
-      Please respond with "Violation" if there is a violation and "No Violation" if there isn't.  
-    `;
+    if (sentences.length === 0) continue; // Skip if no sentences  
 
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          { role: "system", content: "You are a legal assistant." },
-          { role: "user", content: prompt },
-        ],
-      });
+    for (const sentence of sentences) {  
+      const { text } = sentence;  
 
-      // Validate the response structure  
-      if (response.choices && response.choices.length > 0) {
-        const violationCheckResponse = response.choices[0]?.message?.content?.trim() || "";
-        console.log("Violation Check Response:", violationCheckResponse);
-        
-        // Directly check the response to see if it's a violation  
-        if (violationCheckResponse === "Violation") {
-          results.push({
-            transcript: text,
-            violationCheck: "Violation",  // Directly set violationCheck  
-            start: chunk.start,
-            end: chunk.end,
-          });
-        }
-      } else {
-        console.error("No choices returned in the response for chunk:", text);
-      }
-    } catch (error) {
-      console.error("Error checking violation for chunk:", text, "Error:", error);
-    }
-  }
+      // Create a focused prompt  
+      const prompt = `  
+      You are a legal assistant specialized in Czech law. Please analyze the following statement, written in Czech, for potential legal violations.  
+      **Statement:** "${text}"  
+      **Legal Rules to Consider (also in Czech):** ${legalRules.join(", ")}  
+      Respond only with "Violation" if the statement violates any legal rules and explain briefly why the sentence is violated. Do not provide any additional information.  
+  `;   
 
-  return results;
+      try {  
+        const response = await openai.chat.completions.create({  
+          model: "gpt-4",  
+          messages: [  
+            { role: "system", content: "You are a legal assistant." },  
+            { role: "user", content: prompt },  
+          ],  
+        });  
+
+        // Validate the response structure  
+        if (response.choices && response.choices.length > 0) {  
+          const violationCheckResponse = response.choices[0]?.message?.content?.trim() || "";  
+          console.log("Violation Check Response:", violationCheckResponse);  
+
+          // Check if the response indicates a violation  
+          if (violationCheckResponse.startsWith("Violation")) {  
+            results.push({  
+              transcript: text,  
+              violationCheck: "Violation",  // Only store violations  
+              start: paragraph.start,  
+              end: paragraph.end,  
+            });  
+          }  
+        } else {  
+          console.error("No choices returned in the response for sentence:", text);  
+        }  
+      } catch (error) {  
+        console.error("Error checking violation for sentence:", text, "Error:", error);  
+      }  
+    }  
+  }  
+
+  return results; // This will only contain violations  
 }
