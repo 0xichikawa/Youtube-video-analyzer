@@ -26,7 +26,7 @@ const openai = new OpenAI({
 });  
 
 // Function to analyze transcripts in paragraphs  
-export async function analyzeTranscriptsInChunks(paragraphs: Paragraph[], legalRules: string[]): Promise<AnalysisResult[]> {  
+export async function analyzeTranscriptsInParagraphs(paragraphs: Paragraph[], legalRules: string[]): Promise<AnalysisResult[]> {  
   const results: AnalysisResult[] = [];  
 
   for (const paragraph of paragraphs) {  
@@ -39,11 +39,14 @@ export async function analyzeTranscriptsInChunks(paragraphs: Paragraph[], legalR
 
       // Create a focused prompt  
       const prompt = `  
-      You are a legal assistant specialized in Czech law. Please analyze the following statement, written in Czech, for potential legal violations.  
-      **Statement:** "${text}"  
+      You are a legal assistant specialized in Czech law. Please review the following YouTube video transcript for potential legal violations based on the provided legal rules, both written in Czech.  
+      
+      **YouTube Transcript:** "${text}"  
+      
       **Legal Rules to Consider (also in Czech):** ${legalRules.join(", ")}  
-      Respond only with "Violation" if the statement violates any legal rules and explain briefly why the sentence is violated. Do not provide any additional information.  
-  `;   
+    
+      Respond only with "Violation" if any part of the transcript violates the specified legal rules, along with a brief explanation of why the violation occurs. Please do not provide any additional information or commentary.  
+    `;    
 
       try {  
         const response = await openai.chat.completions.create({  
