@@ -46,16 +46,16 @@ export async function extractLegalRules(articleUrl: string): Promise<string[]> {
   try {
     const content = await fetchArticleContent(articleUrl);
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "You are a legal assistant." },
-        {
-          role: "user",
-          content: `Summarize the main legal principles from this article in detail in Czech:\n\n${content}`,
-        },
-      ],
-    });
+    const response = await openai.chat.completions.create({  
+      model: "gpt-4",  
+      messages: [  
+        { role: "system", content: "You are a legal assistant proficient in Czech law." },  
+        {  
+          role: "user",  
+          content: `Please summarize the main legal principles from this article in detail in Czech:\n\n${content}`,  
+        },  
+      ],  
+    });  
 
     const summary = response.choices[0]?.message?.content;
     if (!summary) {

@@ -5,7 +5,7 @@ dotenv.config();
 
 import { processVideo } from "./src/deepgram.helpers";
 import { extractLegalRules } from "./src/article.helper";
-import { analyzeTranscriptsInChunks } from "./src/llm";
+import { analyzeTranscriptsInParagraphs } from "./src/llm";
 
 async function main(videoUrl: string, articleUrl: string): Promise<void> {
   try {
@@ -14,9 +14,9 @@ async function main(videoUrl: string, articleUrl: string): Promise<void> {
 
     const extractedRules = await extractLegalRules(articleUrl);
     console.log("Extracted Legal Rules:", extractedRules);
-    await analyzeTranscriptsInChunks(paragraphs, extractedRules);
+    await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
 
-    const analysisResults = await analyzeTranscriptsInChunks(paragraphs, extractedRules);
+    const analysisResults = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
     console.log("Analysis Results:", analysisResults);
     // Save results to JSON file
     const outputPath = path.join(__dirname, "data", "violated_paragraphs.json");
