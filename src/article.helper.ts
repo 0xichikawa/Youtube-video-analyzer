@@ -1,11 +1,17 @@
 import axios from "axios";
 import * as cheerio from "cheerio"; // For extracting text from HTML  
 import OpenAI from 'openai'; // Default import  
+import { calculateTokenCosts } from "./tokenCosts.helper"; // Adjust the path as needed
 
 // Initialize OpenAI  
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+interface LegalRuleResult {
+  legalRules: string[];
+  tokenCosts: number;
+}
 
 /**  
  * Fetches and cleans the content of an article from a given URL.  
@@ -42,28 +48,22 @@ async function fetchArticleContent(url: string): Promise<string> {
  * @param content - The text content of the article.  
  * @returns A promise resolving to an array of legal rules.  
  */
-export async function extractLegalRules(articleUrl: string): Promise<string[]> {
+export async function extractLegalRules(articleUrl: string): Promise<LegalRuleResult> {
   try {
     const articleContent = await fetchArticleContent(articleUrl);
 
     const extractLegalRulesPrompt = `  
-    Vaším úkolem je extrahovat **konkrétní právní pravidla** z níže uvedeného vládního článku.  
-    Postupujte následujícím způsobem:  
-    1. Identifikujte **výslovná pravidla** (co se smí/nesmí podle textu).  
-    2. Identifikujte **implikovaná pravidla** – pravidla, která nejsou výslovně uvedena, ale vyplývají z kontextu.  
-    3. Snažte se pravidla formulovat co nejjasněji a specificky.  
+    You are a legal assistant specializing in Czech law. Your task is to identify and summarize the key legal rules and principles from the following government article. Please provide your summary in detail, listing each legal rule clearly in Czech, and include brief explanations where necessary.  
     
-    **Vládní článek:** ${articleContent}  
+    **Government Article Content:** "${articleContent}"  
     
-    ### Odpověď ve formě seznamu:  
-    - [Výslovná pravidla: ...]  
-    - [Implikovaná pravidla: ...]  
-    `;
+    Use bullet points where appropriate to enhance readability. Focus on legal concepts that relate to potential violations of consumer protection, financial regulations, or other relevant areas of law.  
+    `;  
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages: [
-        { role: "system", content: "Jste právní asistent specializovaný na české právo." },
+        { role: "system", content: "You are a legal assistant specializing in Czech law." },
         {
           role: "user",
           content: extractLegalRulesPrompt,
@@ -82,7 +82,8 @@ export async function extractLegalRules(articleUrl: string): Promise<string[]> {
       .map(line => line.trim())
       .filter(line => line.length > 0); // Remove empty lines  
 
-    return legalRules;
+    const tokenCosts = calculateTokenCosts(extractLegalRulesPrompt, summary);
+    return { legalRules, tokenCosts };
   } catch (error) {
     console.error("Error extracting legal rules:", error instanceof Error ? error.message : error);
     throw new Error("Unable to summarize legal rules.");
