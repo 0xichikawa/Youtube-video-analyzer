@@ -22,6 +22,7 @@ interface Paragraph {
 interface TranscriptionResult {
   transcript: string;       // The complete transcript of the audio  
   paragraphs: Paragraph[];   // Array of paragraphs  
+  videoId: string;           // The ID of the video
 }
 
 /**  
@@ -72,6 +73,7 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
     return {
       transcript,
       paragraphs,
+      videoId: path.basename(audioPath, ".mp3"),
     };
   } catch (error) {
     console.error("Error in transcription:", error);
@@ -95,7 +97,7 @@ export async function processVideo(videoUrl: string): Promise<TranscriptionResul
       JSON.stringify(transcript, null, 2)  
     );  
     console.log(`Transcription completed and saved to ${outputPath}`);
-    return {transcript, paragraphs}  
+    return {transcript, paragraphs, videoId}  
   } catch (error) {
     console.error(`Error processing video ${videoUrl}:`, error);
     throw error;
