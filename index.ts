@@ -47,10 +47,9 @@ async function main(videoUrls: string[], articleUrl: string): Promise<void> {
 
 const videoUrls = [
   "https://www.youtube.com/watch?v=nW6JEbEG7c4",
-  // "https://www.youtube.com/watch?v=p76oc2yfcX0",
-  // "https://www.youtube.com/watch?v=wFw4TovEicE",
-  // "https://www.youtube.com/watch?v=p76oc2yfcX0",
-  // "https://www.youtube.com/watch?v=ULDZk6FoAiY"
+  "https://www.youtube.com/watch?v=p76oc2yfcX0",
+  "https://www.youtube.com/watch?v=wFw4TovEicE",
+  "https://www.youtube.com/watch?v=ULDZk6FoAiY"
 ];
 const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";
 
