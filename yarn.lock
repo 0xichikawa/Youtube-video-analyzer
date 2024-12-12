@@ -204,6 +204,11 @@
   resolved "https://registry.npmjs.org/@js-sdsl/ordered-map/-/ordered-map-4.4.2.tgz"
   integrity sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==
 
+"@microsoft/tiktokenizer@^1.0.9":
+  version "1.0.9"
+  resolved "https://registry.npmjs.org/@microsoft/tiktokenizer/-/tiktokenizer-1.0.9.tgz"
+  integrity sha512-rl8G2WVLfLVxzQR0uVn//Wl3SUQNYgQg0ML4e0Dvx7CDTl/cvi33yiVt7CJ35e9igSkVmQMOg7/J/Wo0unw0Kg==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz"
@@ -2646,6 +2651,11 @@ teeny-request@^9.0.0:
     node-fetch "^2.6.9"
     stream-events "^1.0.5"
     uuid "^9.0.0"
+
+tiktoken@^1.0.17:
+  version "1.0.17"
+  resolved "https://registry.npmjs.org/tiktoken/-/tiktoken-1.0.17.tgz"
+  integrity sha512-UuFHqpy/DxOfNiC3otsqbx3oS6jr5uKdQhB/CvDEroZQbVHt+qAK+4JbIooabUWKU9g6PpsFylNu9Wcg4MxSGA==
 
 to-regex-range@^5.0.1:
   version "5.0.1"

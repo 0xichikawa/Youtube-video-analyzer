@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 
+import { calculateTokenCosts } from "./tokenCosts.helper";
+
 interface Paragraph {
   sentences: Sentence[];
   speaker: number;
@@ -16,9 +18,14 @@ interface Sentence {
 
 interface AnalysisResult {
   transcript: string;
-  violationCheck: "Violation"; // Restricting to only "Violation" because we only need violated sentences  
+  violatedReason: string;
   start: number;
   end: number;
+}
+
+interface LLMResult {
+  results: AnalysisResult[];
+  analyzeTotalCost: number;
 }
 
 const openai = new OpenAI({
@@ -26,83 +33,72 @@ const openai = new OpenAI({
 });
 
 // Function to analyze transcripts in paragraphs  
-export async function analyzeTranscriptsInParagraphs(paragraphs: Paragraph[], legalRules: string[]): Promise<AnalysisResult[]> {
+export async function analyzeTranscriptsInParagraphs(paragraphs: Paragraph[], legalRules: string[]): Promise<LLMResult> {
+  let analyzeTotalCost = 0;
   const results: AnalysisResult[] = [];
 
-  for (const paragraph of paragraphs) {
-    const { sentences } = paragraph;
-
+  for (const paragraph of paragraphs) {  
+    const { sentences } = paragraph;  
+  
     if (sentences.length === 0) continue; // Skip if no sentences  
-
-    for (const sentence of sentences) {
-      const { text } = sentence;
-
+  
+    for (const sentence of sentences) {  
+      const { text } = sentence;  
+  
       // Create a focused prompt  
       const checkViolationsPrompt = `  
-Jste právní asistent specializovaný na české právo. Vaším úkolem je analyzovat přepis a zjistit, zda některé jeho části porušují právní pravidla uvedená níže. Zaměřte se na výroky, které mohou být považovány za přímé porušení pravidel.  
-
-### Postup analýzy:  
-1. **Porovnejte obsah přepisu s pravidly** uvedenými níže. Výrok porušuje pravidlo, pouze pokud:  
-   - Obsahuje **přímé instrukce** nebo **návodné kroky** týkající se vydělávání peněz.  
-   - Naznačuje **zaručený výsledek** (např. jistotu zisku) bez uvedení rizik.  
-   - Používá jazyk, který může být **zavádějící** nebo **nepodložený** (např. "učte se z mých přesných kroků").  
-2. **Ignorujte nejednoznačné výroky** (např. subjektivní názory nebo obecná doporučení), pokud nelze jednoznačně určit, že porušují pravidlo.  
-3. Pokud zjistíte porušení, vysvětlete jasně:  
-   - Které konkrétní pravidlo je porušeno.  
-   - Jaká část přepisu porušení způsobuje (uveďte celý příslušný text přepisu).  
-   - Proč tento výrok jednoznačně porušuje pravidlo.  
-4. Pokud pravidlo není porušeno, uveďte pouze: "Žádné porušení."  
-
-### Příklady výroků, které jsou červenými vlajkami:  
-- Přímé instrukce: "Postupujte podle těchto kroků a vyděláte peníze."  
-- Zaručené výsledky: "Není možné prodělat, pokud použijete tento systém."  
-- Nepodložené tvrzení: "Toto je jediný způsob, jak zbohatnout."  
-- Jazyk podněcující k akci: "Učte se z mých přesných kroků a uspějete."  
-
-### Právní pravidla ke kontrole:  
-${legalRules}  
-
-### Přepis k analýze:  
-"${text}"  
-
-### Odpověď:  
-- Pokud najdete porušení, napište:  
-  "Porušení: [Odůvodnění, které pravidlo je porušeno + konkrétní část přepisu, která problém způsobila]."  
-- Pokud nenajdete žádné porušení, napište:  
-  "Žádné porušení."  
-`;
-
-      try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-            { role: "system", content: "Jste právní asistent specializovaný na české právo." },
-            { role: "user", content: checkViolationsPrompt },
-          ],
-        });
-
+      You are a legal assistant trained in Czech law. Thoroughly review the following YouTube transcript and identify any statements that may violate the legal rules extracted from the government article provided below.   
+  
+      **YouTube Transcript:** "${text}"  
+  
+      **Legal Rules to Consider (in Czech):** ${legalRules.join(", ")}  
+  
+      If you find any violations, respond with "Violation" and explain the reason how they violate the legal rules with the beginning of "violated reason". If there are no violations, respond simply with "No Violations", additional explanation is not required"  
+      `;  
+  
+      try {  
+        const response = await openai.chat.completions.create({  
+          model: "gpt-4o",  
+          messages: [  
+            { role: "system", content: "You are a legal assistant specializing in Czech law." },  
+            { role: "user", content: checkViolationsPrompt },  
+          ],  
+        });  
+  
         // Validate the response structure  
-        if (response.choices && response.choices.length > 0) {
-          const violationCheckResponse = response.choices[0]?.message?.content?.trim() || "";
-          console.log("Violation Check Response:", violationCheckResponse);
-
+        if (response.choices && response.choices.length > 0) {  
+          const violationCheckResponse = response.choices[0]?.message?.content?.trim() || "";  
+          console.log("Violation Check Response:", violationCheckResponse);  
+  
           // Check if the response indicates a violation  
-          if (violationCheckResponse.startsWith("Porušení")) {
-            results.push({
-              transcript: text,
-              violationCheck: "Violation",  // Only store violations  
-              start: sentence.start,
-              end: sentence.end,
-            });
-          }
-        } else {
-          console.error("No choices returned in the response for sentence:", text);
-        }
-      } catch (error) {
-        console.error("Error checking violation for sentence:", text, "Error:", error);
-      }
-    }
+          if (violationCheckResponse.startsWith("Violation")) {  
+            // Extract the violated reason  
+            const violatedReasonIndex = violationCheckResponse.indexOf("violated reason");  
+            let violatedReason = "";  
+  
+            if (violatedReasonIndex !== -1) {  
+              violatedReason = violationCheckResponse.substring(violatedReasonIndex + "violated reason".length).trim();  
+            }  
+  
+            // Store the result with the violated reason  
+            results.push({  
+              transcript: text,  
+              violatedReason,               // Add the violated reason   
+              start: sentence.start,  
+              end: sentence.end,  
+            });  
+          }  
+  
+          analyzeTotalCost += calculateTokenCosts(checkViolationsPrompt, violationCheckResponse);  
+        } else {  
+          console.error("No choices returned in the response for sentence:", text);  
+        }  
+  
+      } catch (error) {  
+        console.error("Error checking violation for sentence:", text, "Error:", error);  
+      }  
+    }  
   }
 
-  return results; // This will only contain violations  
+  return { results, analyzeTotalCost }; // This will only contain violations  
 }
