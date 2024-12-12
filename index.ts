@@ -13,7 +13,7 @@ async function processSingleVideo(videoUrl: string, extractedRules: string[]): P
     console.log("Processing completed for video:", videoId);
 
     // Analyze transcripts with the pre-fetched legal rules  
-    const {results, analyzeTotalCost} = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
+    const { results, analyzeTotalCost } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
 
     // Save results to JSON file  
     const outputDir = path.join(__dirname, "data");
@@ -28,24 +28,29 @@ async function processSingleVideo(videoUrl: string, extractedRules: string[]): P
   }
 }
 
-async function main(videoUrls: string[], articleUrl: string): Promise<void> {
-  try {
+async function main(videoUrls: string[], articleUrl: string): Promise<void> {  
+  try {  
     // Extract legal rules once  
-    const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);
-    console.log("Extracted Legal Rules:", legalRules);
+    const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);  
+    console.log("Extracted Legal Rules:", legalRules);  
 
-    // Process each video with the extracted rules  
-    const promises = videoUrls.map(videoUrl => processSingleVideo(videoUrl, legalRules));
-    await Promise.all(promises);
-    console.log("Token cost:", tokenCosts);
-  } catch (error) {
-    console.error("Error in main process:", error);
-  }
-}
+    // Process each video sequentially  
+    for (const videoUrl of videoUrls) {  
+      await processSingleVideo(videoUrl, legalRules);  
+    }  
+
+    console.log("Token cost:", tokenCosts);  
+  } catch (error) {  
+    console.error("Error in main process:", error);  
+  }  
+} 
 
 const videoUrls = [
   "https://www.youtube.com/watch?v=nW6JEbEG7c4",
-  "https://www.youtube.com/watch?v=p76oc2yfcX0"
+  // "https://www.youtube.com/watch?v=p76oc2yfcX0",
+  // "https://www.youtube.com/watch?v=wFw4TovEicE",
+  // "https://www.youtube.com/watch?v=p76oc2yfcX0",
+  // "https://www.youtube.com/watch?v=ULDZk6FoAiY"
 ];
 const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";
 
