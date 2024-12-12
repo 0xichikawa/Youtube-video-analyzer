@@ -44,18 +44,32 @@ async function fetchArticleContent(url: string): Promise<string> {
  */
 export async function extractLegalRules(articleUrl: string): Promise<string[]> {
   try {
-    const content = await fetchArticleContent(articleUrl);
+    const articleContent = await fetchArticleContent(articleUrl);
 
-    const response = await openai.chat.completions.create({  
-      model: "gpt-4",  
-      messages: [  
-        { role: "system", content: "You are a legal assistant proficient in Czech law." },  
-        {  
-          role: "user",  
-          content: `Please summarize the main legal principles from this article in detail in Czech:\n\n${content}`,  
-        },  
-      ],  
-    });  
+    const extractLegalRulesPrompt = `  
+    Vaším úkolem je extrahovat **konkrétní právní pravidla** z níže uvedeného vládního článku.  
+    Postupujte následujícím způsobem:  
+    1. Identifikujte **výslovná pravidla** (co se smí/nesmí podle textu).  
+    2. Identifikujte **implikovaná pravidla** – pravidla, která nejsou výslovně uvedena, ale vyplývají z kontextu.  
+    3. Snažte se pravidla formulovat co nejjasněji a specificky.  
+    
+    **Vládní článek:** ${articleContent}  
+    
+    ### Odpověď ve formě seznamu:  
+    - [Výslovná pravidla: ...]  
+    - [Implikovaná pravidla: ...]  
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: "Jste právní asistent specializovaný na české právo." },
+        {
+          role: "user",
+          content: extractLegalRulesPrompt,
+        },
+      ],
+    });
 
     const summary = response.choices[0]?.message?.content;
     if (!summary) {
