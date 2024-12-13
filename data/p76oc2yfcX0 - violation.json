@@ -1,0 +1,20 @@
+[
+  {
+    "transcript": "Na akcích bys měl každý den vydělávat minimálně 1 denně stejně jako já.",
+    "violatedReason": "The statement \"Na akcích bys měl každý den vydělávat minimálně 1 denně stejně jako já\" can be interpreted as a personalized recommendation. This expression suggests a specific outcome and is framed in a way that implies an individualized gain expectation similar to the speaker's own results, which aligns with a personal recommendation under the legal rules. This kind of statement falls under stricter regulation of personal investment advice, as it potentially misleads the client about the suitability and success of such investments for their specific circumstances.",
+    "start": 20.105,
+    "end": 27.085
+  },
+  {
+    "transcript": "Pokud se rozhodnete investovat dluhopisů ČR, což je velmi bezpečná investice, tak ty vám ponesou aktuálně 585% ročně průměrně.",
+    "violatedReason": "The statement \"Pokud se rozhodnete investovat dluhopisů ČR, což je velmi bezpečná investice, tak ty vám ponesou aktuálně 585% ročně průměrně.\" could be considered a personal recommendation if it suggests an investment product as the best or a particularly suitable option for the listener. By suggesting that these bonds are \"velmi bezpečná investice\" (very safe investment) and giving a specific return rate, it implies a degree of individual advice, potentially misleading clients into believing it is specifically suitable for them. This could violate the need for ensuring the message isn't perceived as targeted personal advice without proper regulatory compliance (as indicated under § 4 odst. 1 bodu 4 MiFID II and Article 9 of Regulation 2017/565).",
+    "start": 243.145,
+    "end": 253.66
+  },
+  {
+    "transcript": "S Fingudem jsme taky pro vás připravili výhodu, že pokud při registraci zadáte kód OK 500, tak při proinvestování 5 tisíc korun dostanete pětistovku na váš účet, což je v podstatě 10procentní zhodnocení zdarma.",
+    "violatedReason": "The statement in the YouTube transcript can be interpreted as a personal recommendation because it suggests a financial benefit (\"výhodu\") specifically tied to a certain action by the client (using a specific registration code and investing 5,000 CZK to receive a 10% return). This is akin to personal advice as it seems tailored to the individual's potential financial scenario, akin to saying, \"this is the best solution for you\", which falls under the regulation of individualized investment advice according to the principles outlined in Article 9 and recital 14 of Regulation (EU) 2017/565 and relevant Czech law.",
+    "start": 306.78497,
+    "end": 320.01
+  }
+]

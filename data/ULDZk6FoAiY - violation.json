@@ -1,0 +1,26 @@
+[
+  {
+    "transcript": "No jak já jsem to slyšel, tak mi normálně málem omylu, že člověk, který pracuje v bance, radí lidem s penězi, radí člověku, že má naše měsíců zainvestovat do akcií nebo nebo nějakých fondů.",
+    "violatedReason": "The transcript suggests that a person working in a bank is providing advice on investing in stocks or funds. This could potentially be interpreted as providing personal investment advice, as it seems to be directed at an individual (\"radí člověku\") and is regarding financial decisions, which aligns with the definition of personal recommendations under the legal rules. If this advice is tailored to the individual's personal circumstances, it would require compliance with regulations concerning personal investment advice. The transcript does not clearly distinguish whether the advice is personal or general, which could lead to potential misinterpretation and thus constitutes a potential violation.",
+    "start": 349.17502,
+    "end": 362.31998
+  },
+  {
+    "transcript": "Tuhle komunitu bych rozhodně doporučil.",
+    "violatedReason": "The statement \"Tuhle komunitu bych rozhodně doporučil\" could be perceived as an individual recommendation if it is tailored to the client's specific circumstances, especially if it is communicated directly to an individual. According to the legal rules, any advice presented in a manner that appears personalized and considers the recipient's personal conditions may fall under the category of personal recommendation, which requires adherence to stricter regulations. If the statement is made in a context where it could be seen as directed to a specific person considering their personal situation, it would therefore need to comply with regulations concerning personal investment advice.",
+    "start": 516.44,
+    "end": 518.85504
+  },
+  {
+    "transcript": "Zbývá posledních 150 míst pro ty, kteří chtějí stopy do komunity, kde vás naučím, jak ziskově investovat a dosáhnout finanční svobody Nyní stále za nižší cenu, která vám navíc zůstane napořád.",
+    "violatedReason": "The statement \"Zbývá posledních 150 míst pro ty, kteří chtějí stopy do komunity, kde vás naučím, jak ziskově investovat a dosáhnout finanční svobody\" could imply a personal recommendation. The language suggests that individuals joining the community will receive tailored advice on how to invest profitably and achieve financial freedom, which falls under the definition of personal investment advice as per Article 9 of Regulation (EU) 2017/565. It implies personalization and could mislead individuals into thinking the advice is specifically tailored to their personal circumstances, which requires adherence to stricter regulations.",
+    "start": 595.79,
+    "end": 607.825
+  },
+  {
+    "transcript": "A váš úkol je vybrat tu činnost nebo investici pro vás nejvýhodnější.",
+    "violatedReason": "The statement \"A váš úkol je vybrat tu činnost nebo investici pro vás nejvýhodnější\" can be interpreted as a personal recommendation. It suggests that the advice is tailored to the individual's specific conditions, which falls under the definition of a personal recommendation according to § 4 odst. 1 bodu 4 MiFID II and Article 9 of Regulation 2017/565. This type of communication is subject to stricter regulations than general recommendations, and thus constitutes a violation of the outlined legal rules.",
+    "start": 643.21,
+    "end": 646.99
+  }
+]
