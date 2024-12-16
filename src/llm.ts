@@ -62,14 +62,27 @@ export async function analyzeTranscriptsInParagraphs(paragraphs: Paragraph[], le
 
       // If you identify any violations, respond with "Violation" and provide a clear explanation starting with "Violated reason: ". If there are no violations, respond simply with "No Violations".  
       // `; 
-      const checkViolationsPrompt = `  
-          You are a legal assistant specializing in Czech law. You have extracted legal rules from the government article written in Czech. And also you have youtube video transcript written in Czech. Please  check the youtube transcript if it has any violations regarding the legal rules      
-          **Legal Rules to Consider in Czech:** ${legalRules.join(", ")}
 
-          **YouTube Transcript in Czech:** "${text}" 
-      
-          If you find any violations, respond with "Violation" and explain the reason how they violate the legal rules with the beginning of "Violated reason". If there are no violations, respond simply with "No Violations", additional explanation is not required"  
-          `
+      // const checkViolationsPrompt = `  
+      //     You are a legal assistant specializing in Czech law. You have extracted legal rules from the government article written in Czech. And also you have youtube video transcript written in Czech. Please  check the youtube transcript if it has any violations regarding the legal rules      
+      //     **Legal Rules to Consider in Czech:** ${legalRules.join(", ")}
+
+      //     **YouTube Transcript in Czech:** "${text}" 
+
+      //     If you find any violations, respond with "Violation" and explain the reason how they violate the legal rules with the beginning of "Violated reason". If there are no violations, respond simply with "No Violations", additional explanation is not required"  
+      //     `
+
+      const checkViolationsPrompt = `  
+  You are a legal assistant trained in Czech law. Thoroughly review the following YouTube transcript and identify any statements that may contravene the legal rules extracted from the government article provided below.   
+
+  **YouTube Transcript:** "${text}"  
+
+  **Extracted Legal Rules (in Czech):** ${legalRules.join(", ")}  
+
+  - If you find any violations, respond with "Violation" and explain the reason how they violate the legal rules, beginning with "Violated reason: ".  
+  - If there are no violations, simply respond with "No Violations".  
+  - Ensure that your analysis includes specific references to the extracted legal rules where applicable.  
+`;
 
       try {
         const response = await openai.chat.completions.create({
@@ -100,7 +113,7 @@ export async function analyzeTranscriptsInParagraphs(paragraphs: Paragraph[], le
             // Store the result with the violated reason  
             results.push({
               transcript: text,
-              violatedReason,     
+              violatedReason,
               start: sentence.start,
               end: sentence.end,
             });

@@ -54,19 +54,14 @@ export async function extractLegalRules(articleUrl: string): Promise<LegalRuleRe
 
     const extractLegalRulesPrompt = `  
     You are a legal assistant specializing in Czech law. Your task is to identify and summarize the key legal rules and principles from the following government article. Please provide your summary in detail, listing each legal rule clearly in Czech, and include brief explanations where necessary.  
-    
-    **Government Article Content:**  
-    "${articleContent}"  
-    
-    - **Focus on Legal Concepts**: Pay particular attention to regulations related to consumer protection, financial markets, and any areas that might affect public advisories on financial transactions.  
-    - **Output Format**: Use bullet points for each rule. Ensure that your summary includes:  
-      - The legal rule or principle.  
-      - A brief explanation of its significance.  
-      - Any relevant examples that clarify the application of the rule.  
-    
-    Emphasize clarity and relevance, particularly in the context of possible violations in financial advisory situations.  
-    `; 
-
+  
+    **Government Article Content:** "${articleContent}"  
+  
+    - Use bullet points to enhance readability.  
+    - Focus on legal concepts related to potential violations of consumer protection, financial regulations, or other relevant areas of law.  
+    - Provide clear definitions and contexts for each rule to facilitate understanding of their implications.  
+  `;
+  
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
