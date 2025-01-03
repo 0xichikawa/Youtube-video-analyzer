@@ -323,6 +323,13 @@
   resolved "https://registry.npmjs.org/@types/caseless/-/caseless-0.12.5.tgz"
   integrity sha512-hWtVTC2q7hc7xZ/RLbxapMvDMgUnDvKvMOpKal4DrMyfGBUfB1oKaZlIRr6mJL+If3bAP6sV/QneGzF6tJjZDg==
 
+"@types/cheerio@^0.22.35":
+  version "0.22.35"
+  resolved "https://registry.npmjs.org/@types/cheerio/-/cheerio-0.22.35.tgz"
+  integrity sha512-yD57BchKRvTV+JD53UZ6PD8KWY5g5rvvMLRnZR3EQBCZXiDT/HR+pKpMzFGlWNhFrXlo7VPZXtKvIEwZkAWOIA==
+  dependencies:
+    "@types/node" "*"
+
 "@types/duplexify@*":
   version "3.6.4"
   resolved "https://registry.npmjs.org/@types/duplexify/-/duplexify-3.6.4.tgz"
