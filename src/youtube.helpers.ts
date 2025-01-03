@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import axios from 'axios';
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 
 const CHANNEL_URL = 'https://www.youtube.com/c/OndřejKoběrský/videos'; // Channel videos page  
 const TWO_YEARS_AGO = new Date();
@@ -154,40 +154,42 @@ export async function downloadVideoInChunks(
   }
 }
 
-// Function to scrape YouTube video links from a channel  
+// Function to scrape YouTube video links from a channel
 export async function scrapeYoutubeVideos() {
   try {
     const response = await axios.get(CHANNEL_URL);
     const html = response.data;
     const $ = cheerio.load(html);
-    const videoLinks: string[] = [];
-
-    // Select video elements  
+    const videoUrls: string[] = [];
+    
+    // Select video elements
     $('a#video-title').each((_, element) => {
       const videoUrl = $(element).attr('href');
+      console.log("videoUrl--------->", videoUrl);
       const publishedDateText = $(element).parents('div').find('#metadata-line span').first().text();
       const publishedDate = parsePublishedDate(publishedDateText);
 
       if (videoUrl && publishedDate && publishedDate >= TWO_YEARS_AGO) {
-        videoLinks.push(`https://www.youtube.com${videoUrl}`);
+        videoUrls.push(`https://www.youtube.com${videoUrl}`);
       }
     });
 
-    console.log(videoLinks);
-    return videoLinks;
+    console.log(videoUrls);
+    return videoUrls;
   } catch (error) {
     console.error('Error fetching video links:', error);
+    throw error;
   }
 }
 
-// Helper function to parse the published date from string  
+// Helper function to parse the published date from string
 function parsePublishedDate(dateString: string): Date | null {
   const dateMatch = dateString.match(/(\d+)\s+(day|week|month|year)s? ago/);
   if (dateMatch) {
     const amount = parseInt(dateMatch[1]);
     const unit = dateMatch[2];
-
     const date = new Date();
+
     switch (unit) {
       case 'day':
         date.setDate(date.getDate() - amount);
@@ -205,11 +207,12 @@ function parsePublishedDate(dateString: string): Date | null {
     return date;
   }
 
-  // Handle cases like specific dates (e.g., month/day/year formats)  
+  // Handle cases like specific dates (e.g., month/day/year formats)
   const specificDate = new Date(dateString);
   if (!isNaN(specificDate.getTime())) {
     return specificDate;
   }
 
-  return null; // Return null if parsing fails  
-}  
+  return null;
+}
+
