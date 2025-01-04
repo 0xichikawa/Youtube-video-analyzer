@@ -60,21 +60,22 @@ async function main(videoUrls: string[], articleUrl: string): Promise<void> {
 }
 
 async function saveToGoogleSheets(data: VideoData[]) {
-  const SPREADSHEET_ID = '10F5EdQ_ttzPDXik-aTNQxllo0wjUIhhWimfmLjMGa9o';
-  const SHEET_NAME = 'Youtube_Videos';
+  console.log("Saving to Google Sheets...");
 
+  // Create the JWT auth instance  
   const serviceAccountAuth = new JWT({
-    email: 'mykola-freelancer-gsheet@main-project-429817.iam.gserviceaccount.com',
-    key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 
-  const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+  // Create the GoogleSpreadsheet instance  
+  const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID as string, serviceAccountAuth);
   await doc.loadInfo();
 
-  let sheet = doc.sheetsByTitle[SHEET_NAME];
+  let sheet = doc.sheetsByTitle[process.env.SHEET_NAME as string];
   if (!sheet) {
-    sheet = await doc.addSheet({ title: SHEET_NAME, headerValues: ['id', 'transcript', 'violated_reason', 'start', 'end', 'video_link'] });
+    sheet = await doc.addSheet({ title: process.env.SHEET_NAME, headerValues: ['id', 'transcript', 'violated_reason', 'start', 'end', 'video_link'] });
   }
 
   const rows = data.map(item => ({
@@ -87,6 +88,7 @@ async function saveToGoogleSheets(data: VideoData[]) {
   }));
 
   await sheet.addRows(rows);
+  console.log("Saved data to Google Sheets successfully.");
 }
 
 async function run() {
