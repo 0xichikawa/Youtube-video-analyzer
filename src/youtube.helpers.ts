@@ -2,8 +2,7 @@ import ytdl from "@distube/ytdl-core";
 import * as fs from "fs";
 import * as path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import dayjs from "dayjs";
-import youtubedl from "youtube-dl-exec";
+import youtubedl, { Payload } from "youtube-dl-exec";
 
 export async function downloadVideo(
   videoUrl: string
@@ -150,37 +149,43 @@ export async function downloadVideoInChunks(
   }
 }
 
-export async function scrapeYoutubeVideos(
-  channelURL: string,
-  years: number = 2
-): Promise<string[]> {
+export async function getVideoLinks(channelUrl: string): Promise<string[]> {
   try {
-    // Define the cutoff date
-    const cutoffDate = dayjs().subtract(years, "year");
+    const scrapedVideoUrls: string[] = [];
+    const dateTwoYearsAgo = new Date();
+    dateTwoYearsAgo.setFullYear(dateTwoYearsAgo.getFullYear() - 2);
+    const formattedDate = dateTwoYearsAgo.toISOString().split('T')[0].replace(/-/g, '');
 
-    // Execute youtube-dl command with json format output
-    const result = await youtubedl(channelURL, {
+    const videoUrlsString: string | Payload = await youtubedl(channelUrl, {
       flatPlaylist: true,
-      dumpSingleJson: true,
+      getUrl: true,
+      noWarnings: true,
     });
 
-    console.log("result----->", result)
+    if (typeof videoUrlsString === 'string') {
+      const videoUrls = videoUrlsString.split('\n').filter(url => url.trim() !== '' && !url.includes('short'));
 
-    // Parse the result as a JSON object
-    const videos = (result as any).entries ?? [];
-
-    // Filter videos based on upload date
-    const videoLinks: string[] = videos
-      .filter((video: any) => {
-        const uploadDate = video.upload_date; // Format: YYYYMMDD
-        const videoDate = dayjs(uploadDate, "YYYYMMDD");
-        return uploadDate && videoDate.isAfter(cutoffDate);
-      })
-      .map((video: any) => `https://www.youtube.com/watch?v=${video.id}`);
-
-    return videoLinks;
+      for (const videoUrl of videoUrls) {
+        const output = await youtubedl(videoUrl, {
+          dumpSingleJson: true,
+          flatPlaylist: true,
+          noCheckCertificates: true,
+          noWarnings: true,
+          preferFreeFormats: true,
+          addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        });
+        if (typeof output === 'object') {
+          if (output.upload_date > formattedDate) {
+            scrapedVideoUrls.push(videoUrl);
+          }
+        }
+      }
+    }
+    console.log('Scraped video URLs:', scrapedVideoUrls); 
+    return scrapedVideoUrls;
   } catch (error) {
-    console.error("Error fetching video links:", error);
-    return [];
+    console.error('Error fetching video links:', error);
+    throw error;
   }
 }
