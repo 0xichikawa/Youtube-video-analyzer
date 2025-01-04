@@ -48,7 +48,6 @@ async function main(videoUrls: string[], articleUrl: string): Promise<void> {
   try {
     // Extract legal rules once  
     const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);
-    console.log("Extracted Legal Rules:", legalRules);
 
     // Process each video sequentially or in parallel  
     await Promise.all(videoUrls.map(videoUrl => processSingleVideo(videoUrl, legalRules)));
@@ -97,7 +96,6 @@ async function run() {
     'https://www.youtube.com/watch?v=iOmxIV9ehTI',
     'https://www.youtube.com/watch?v=0DThjRo_oBo'
   ];
-  console.log("Video URLs---------->", scrapedVideoUrls);
 
   if (!scrapedVideoUrls.length) {
     console.error("No video URLs found. Exiting.");
