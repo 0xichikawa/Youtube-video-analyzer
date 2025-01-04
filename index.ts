@@ -1,60 +1,109 @@
 import * as fs from "fs";
 import * as path from "path";
 import dotenv from "dotenv";
-// import { processVideo } from "./src/deepgram.helpers";
-// import { extractLegalRules } from "./src/article.helper";
-// import { analyzeTranscriptsInParagraphs } from "./src/llm";
+import { GoogleSpreadsheet } from "google-spreadsheet";
+import { JWT } from "google-auth-library";
+import { processVideo } from "./src/deepgram.helpers";
+import { extractLegalRules } from "./src/article.helper";
+import { analyzeTranscriptsInParagraphs } from "./src/llm";
 import { getVideoLinks } from "./src/youtube.helpers";
+
+interface VideoData {
+  id: string;
+  transcript: string;
+  violated_reason: string;
+  start: number;
+  end: number;
+  video_link: string;
+}
 
 const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; // Channel videos page  
 
-// async function processSingleVideo(videoUrl: string, extractedRules: string[]): Promise<void> {
-//   try {
-//     const { paragraphs, videoId } = await processVideo(videoUrl);
-//     console.log("Processing completed for video:", videoId);
+async function processSingleVideo(videoUrl: string, extractedRules: string[]): Promise<void> {
+  try {
+    const { paragraphs, videoId } = await processVideo(videoUrl);
+    console.log("Processing completed for video:", videoId);
 
-//     // Analyze transcripts with the pre-fetched legal rules  
-//     const { results, analyzeTotalCost } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
+    const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
 
-//     // Save results to JSON file  
-//     const outputDir = path.join(__dirname, "data");
-//     await fs.promises.mkdir(outputDir, { recursive: true });
-//     const outputPath = path.join(outputDir, `${videoId} - violation.json`);
-//     await fs.promises.writeFile(outputPath, JSON.stringify(results, null, 2));
+    // Prepare data for Google Sheets
+    const sheetsData = results.map(result => ({
+      id: videoId,
+      transcript: result.transcript,
+      violated_reason: result.violatedReason,
+      start: result.start,
+      end: result.end,
+      video_link: videoUrl
+    }));
 
-//     console.log(`Analysis results saved to ${outputPath}`);
-//     console.log(`Analyzing Total token cost: ${analyzeTotalCost}`);
-//   } catch (error) {
-//     console.error(`Error processing video ${videoUrl}:`, error);
-//   }
-// }
+    // Save to Google Sheets
+    await saveToGoogleSheets(sheetsData);
 
-// async function main(videoUrls: string[], articleUrl: string): Promise<void> {
-//   try {
-//     // Extract legal rules once  
-//     const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);
-//     console.log("Extracted Legal Rules:", legalRules);
+  } catch (error) {
+    console.error(`Error processing video ${videoUrl}:`, error);
+  }
+}
 
-//     // Process each video sequentially or in parallel  
-//     await Promise.all(videoUrls.map(videoUrl => processSingleVideo(videoUrl, legalRules)));
+async function main(videoUrls: string[], articleUrl: string): Promise<void> {
+  try {
+    // Extract legal rules once  
+    const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);
+    console.log("Extracted Legal Rules:", legalRules);
 
-//     console.log("Token cost:", tokenCosts);
-//   } catch (error) {
-//     console.error("Error in main process:", error);
-//   }
-// }
+    // Process each video sequentially or in parallel  
+    await Promise.all(videoUrls.map(videoUrl => processSingleVideo(videoUrl, legalRules)));
+
+    console.log("Token cost:", tokenCosts);
+  } catch (error) {
+    console.error("Error in main process:", error);
+  }
+}
+
+async function saveToGoogleSheets(data: VideoData[]) {
+  const SPREADSHEET_ID = '10F5EdQ_ttzPDXik-aTNQxllo0wjUIhhWimfmLjMGa9o';
+  const SHEET_NAME = 'Youtube_Videos';
+
+  const serviceAccountAuth = new JWT({
+    email: 'mykola-freelancer-gsheet@main-project-429817.iam.gserviceaccount.com',
+    key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+  await doc.loadInfo();
+
+  let sheet = doc.sheetsByTitle[SHEET_NAME];
+  if (!sheet) {
+    sheet = await doc.addSheet({ title: SHEET_NAME, headerValues: ['id', 'transcript', 'violated_reason', 'start', 'end', 'video_link'] });
+  }
+
+  const rows = data.map(item => ({
+    id: item.id,
+    transcript: item.transcript,
+    violated_reason: item.violated_reason,
+    start: item.start,
+    end: item.end,
+    video_link: item.video_link
+  }));
+
+  await sheet.addRows(rows);
+}
 
 async function run() {
-  const videoUrls = await getVideoLinks(CHANNEL_URL);
-  // console.log("Video URLs---------->", videoUrls);
+  // const scrapedVideoUrls = await getVideoLinks(CHANNEL_URL);
+  const scrapedVideoUrls = [
+    'https://www.youtube.com/watch?v=iOmxIV9ehTI',
+    'https://www.youtube.com/watch?v=0DThjRo_oBo'
+  ];
+  console.log("Video URLs---------->", scrapedVideoUrls);
 
-  // if (!videoUrls.length) {
-  //   console.error("No video URLs found. Exiting.");
-  //   return; // Exit if no URLs found  
-  // }
+  if (!scrapedVideoUrls.length) {
+    console.error("No video URLs found. Exiting.");
+    return; // Exit if no URLs found  
+  }
 
-  // const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";  
-  // await main(videoUrls, articleUrl);  
+  const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";
+  await main(scrapedVideoUrls, articleUrl);
 }
 
 // Start the process  
