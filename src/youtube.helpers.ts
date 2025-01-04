@@ -2,12 +2,8 @@ import ytdl from "@distube/ytdl-core";
 import * as fs from "fs";
 import * as path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import axios from 'axios';
-import * as cheerio from 'cheerio';
-
-const CHANNEL_URL = 'https://www.youtube.com/c/OndřejKoběrský/videos'; // Channel videos page  
-const TWO_YEARS_AGO = new Date();
-TWO_YEARS_AGO.setFullYear(TWO_YEARS_AGO.getFullYear() - 2);
+import dayjs from "dayjs";
+import youtubedl from "youtube-dl-exec";
 
 export async function downloadVideo(
   videoUrl: string
@@ -154,65 +150,37 @@ export async function downloadVideoInChunks(
   }
 }
 
-// Function to scrape YouTube video links from a channel
-export async function scrapeYoutubeVideos() {
+export async function scrapeYoutubeVideos(
+  channelURL: string,
+  years: number = 2
+): Promise<string[]> {
   try {
-    const response = await axios.get(CHANNEL_URL);
-    const html = response.data;
-    const $ = cheerio.load(html);
-    const videoUrls: string[] = [];
-    
-    // Select video elements
-    $('a#video-title').each((_, element) => {
-      const videoUrl = $(element).attr('href');
-      console.log("videoUrl--------->", videoUrl);
-      const publishedDateText = $(element).parents('div').find('#metadata-line span').first().text();
-      const publishedDate = parsePublishedDate(publishedDateText);
+    // Define the cutoff date
+    const cutoffDate = dayjs().subtract(years, "year");
 
-      if (videoUrl && publishedDate && publishedDate >= TWO_YEARS_AGO) {
-        videoUrls.push(`https://www.youtube.com${videoUrl}`);
-      }
+    // Execute youtube-dl command with json format output
+    const result = await youtubedl(channelURL, {
+      flatPlaylist: true,
+      dumpSingleJson: true,
     });
 
-    console.log(videoUrls);
-    return videoUrls;
+    console.log("result----->", result)
+
+    // Parse the result as a JSON object
+    const videos = (result as any).entries ?? [];
+
+    // Filter videos based on upload date
+    const videoLinks: string[] = videos
+      .filter((video: any) => {
+        const uploadDate = video.upload_date; // Format: YYYYMMDD
+        const videoDate = dayjs(uploadDate, "YYYYMMDD");
+        return uploadDate && videoDate.isAfter(cutoffDate);
+      })
+      .map((video: any) => `https://www.youtube.com/watch?v=${video.id}`);
+
+    return videoLinks;
   } catch (error) {
-    console.error('Error fetching video links:', error);
-    throw error;
+    console.error("Error fetching video links:", error);
+    return [];
   }
 }
-
-// Helper function to parse the published date from string
-function parsePublishedDate(dateString: string): Date | null {
-  const dateMatch = dateString.match(/(\d+)\s+(day|week|month|year)s? ago/);
-  if (dateMatch) {
-    const amount = parseInt(dateMatch[1]);
-    const unit = dateMatch[2];
-    const date = new Date();
-
-    switch (unit) {
-      case 'day':
-        date.setDate(date.getDate() - amount);
-        break;
-      case 'week':
-        date.setDate(date.getDate() - amount * 7);
-        break;
-      case 'month':
-        date.setMonth(date.getMonth() - amount);
-        break;
-      case 'year':
-        date.setFullYear(date.getFullYear() - amount);
-        break;
-    }
-    return date;
-  }
-
-  // Handle cases like specific dates (e.g., month/day/year formats)
-  const specificDate = new Date(dateString);
-  if (!isNaN(specificDate.getTime())) {
-    return specificDate;
-  }
-
-  return null;
-}
-

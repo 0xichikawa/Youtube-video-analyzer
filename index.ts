@@ -6,6 +6,8 @@ import dotenv from "dotenv";
 // import { analyzeTranscriptsInParagraphs } from "./src/llm";
 import { scrapeYoutubeVideos } from "./src/youtube.helpers";
 
+const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; // Channel videos page  
+
 // async function processSingleVideo(videoUrl: string, extractedRules: string[]): Promise<void> {
 //   try {
 //     const { paragraphs, videoId } = await processVideo(videoUrl);
@@ -43,13 +45,13 @@ import { scrapeYoutubeVideos } from "./src/youtube.helpers";
 // }
 
 async function run() {
-  const videoUrls = await scrapeYoutubeVideos();
+  const videoUrls = await scrapeYoutubeVideos(CHANNEL_URL, 2);
   console.log("Video URLs---------->", videoUrls);
 
-  if (!videoUrls.length) {
-    console.error("No video URLs found. Exiting.");
-    return; // Exit if no URLs found  
-  }
+  // if (!videoUrls.length) {
+  //   console.error("No video URLs found. Exiting.");
+  //   return; // Exit if no URLs found  
+  // }
 
   // const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";  
   // await main(videoUrls, articleUrl);  
