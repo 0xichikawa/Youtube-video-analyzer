@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 // import { processVideo } from "./src/deepgram.helpers";
 // import { extractLegalRules } from "./src/article.helper";
 // import { analyzeTranscriptsInParagraphs } from "./src/llm";
-import { scrapeYoutubeVideos } from "./src/youtube.helpers";
+import { getVideoLinks } from "./src/youtube.helpers";
 
 const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; // Channel videos page  
 
@@ -45,8 +45,8 @@ const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; /
 // }
 
 async function run() {
-  const videoUrls = await scrapeYoutubeVideos(CHANNEL_URL, 2);
-  console.log("Video URLs---------->", videoUrls);
+  const videoUrls = await getVideoLinks(CHANNEL_URL);
+  // console.log("Video URLs---------->", videoUrls);
 
   // if (!videoUrls.length) {
   //   console.error("No video URLs found. Exiting.");
