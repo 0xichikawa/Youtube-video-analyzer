@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@deepgram/sdk": "^3.9.0",
-    "@distube/ytdl-core": "^4.15.1",
+    "@distube/ytdl-core": "^4.15.8",
     "@google-cloud/speech": "^6.7.0",
     "@microsoft/tiktokenizer": "^1.0.9",
     "@types/fluent-ffmpeg": "^2.1.27",
