@@ -4,7 +4,8 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "NODE_ENV=local nodemon",
-    "start": "ts-node index.ts"
+    "start": "ts-node index.ts",
+    "clear": "ts-node src/googleSheet.helper.ts"
   },
   "dependencies": {
     "@deepgram/sdk": "^3.9.0",
