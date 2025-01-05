@@ -86,35 +86,8 @@ async function saveToGoogleSheets(data: VideoData[]) {
     video_link: item.video_link
   }));
 
-  // await sheet.addRows(rows);
-  // console.log("Saved data to Google Sheets successfully.");
-  const addedRows = await sheet.addRows(rows); // Add rows to the sheet  
-
-  // Enable text wrapping for the new rows  
-  const startRowIndex = sheet.rowCount - addedRows.length; // Calculate start row index  
-  const endRowIndex = sheet.rowCount; // Current row count after addition  
-
-  // Load the cells of the newly added rows to modify their formats  
-  await sheet.loadCells({  
-      startRowIndex: startRowIndex,  
-      endRowIndex: endRowIndex,  
-      startColumnIndex: 0,  
-      endColumnIndex: sheet.headerValues.length,  
-  });  
-
-  // Loop through the newly added rows and set the wrap strategy  
-  for (let rowIndex = startRowIndex; rowIndex < endRowIndex; rowIndex++) {  
-      for (let colIndex = 0; colIndex < sheet.headerValues.length; colIndex++) {  
-          const cell = sheet.getCell(rowIndex, colIndex);  
-          cell.wrapStrategy = 'WRAP'; // Set wrap strategy for each cell  
-      }  
-  }  
-
-  // Save the changes made to the cells  
-  await sheet.saveUpdatedCells();  
-  console.log("Saved data to Google Sheets successfully with text wrapping.");  
-
-  console.log("Saved data to Google Sheets successfully with text wrapping.");
+  await sheet.addRows(rows);
+  console.log("Saved data to Google Sheets successfully.");
 }
 
 async function run() {
