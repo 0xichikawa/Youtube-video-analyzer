@@ -32,7 +32,13 @@ interface TranscriptionResult {
  */
 async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> {
   try {
+    if (!fs.existsSync(audioPath)) {  
+      console.error("File does not exist:", audioPath);  
+  } else {  
+      console.log("File exists:", audioPath);  
+  }  
     const audioFile = fs.readFileSync(audioPath);
+    console.log("audio file Length------->", audioFile.length);
     const transcriptionOptions: PrerecordedSchema = {
       model: "nova-2-general",
       language: "cs",
@@ -47,6 +53,8 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
       audioFile,
       transcriptionOptions
     );
+
+    console.log("result-------->", result)
 
     if (error) {
       throw new Error(`Deepgram transcription error: ${error}`);
