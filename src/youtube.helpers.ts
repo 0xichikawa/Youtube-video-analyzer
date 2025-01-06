@@ -14,9 +14,8 @@ export async function downloadVideo(
   try {
     //Create Agent for cookies
     const agent = ytdl.createAgent(JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8")));
-    console.log("agent--->", agent);
 
-    const videoInfo = await ytdl.getInfo(videoUrl);
+    const videoInfo = await ytdl.getInfo(videoUrl, {agent});
     const videoId = videoInfo.videoDetails.videoId;
     const dataDir = path.join(__dirname, "..", "data");
 
@@ -33,9 +32,9 @@ export async function downloadVideo(
 
     return new Promise((resolve, reject) => {
       const stream = ytdl(videoUrl, {
-        quality: "highestaudio",
-        filter: "audioonly",
-        agent
+        // quality: "highestaudio",
+        // filter: "audioonly",
+        agent,
       });
 
       // Rest of the code remains the same...

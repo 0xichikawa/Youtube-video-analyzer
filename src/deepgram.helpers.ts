@@ -2,6 +2,9 @@ import { createClient, PrerecordedSchema } from "@deepgram/sdk";
 import * as fs from "fs";
 import * as path from "path";
 import { downloadVideo } from "./youtube.helpers";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY as string);
 
@@ -32,13 +35,7 @@ interface TranscriptionResult {
  */
 async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> {
   try {
-    if (!fs.existsSync(audioPath)) {  
-      console.error("File does not exist:", audioPath);  
-  } else {  
-      console.log("File exists:", audioPath);  
-  }  
     const audioFile = fs.readFileSync(audioPath);
-    console.log("audio file Length------->", audioFile.length);
     const transcriptionOptions: PrerecordedSchema = {
       model: "nova-2-general",
       language: "cs",
@@ -53,8 +50,6 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
       audioFile,
       transcriptionOptions
     );
-
-    console.log("result-------->", result)
 
     if (error) {
       throw new Error(`Deepgram transcription error: ${error}`);
@@ -88,24 +83,24 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
     throw error;
   }
 }
-// : Promise<TranscriptionResult>
-export async function processVideo(videoUrl: string) {
+
+export async function processVideo(videoUrl: string): Promise<TranscriptionResult> {
   try {
     console.log(`Processing video ${videoUrl}...`);
 
     const { audioPath, videoId } = await downloadVideo(videoUrl);
     console.log(`Audio downloaded for ${videoId}`);
 
-    // const { transcript, paragraphs } = await transcribeAudio(audioPath);
+    const { transcript, paragraphs } = await transcribeAudio(audioPath);
 
-    // // Optionally save the transcription to a file, if needed  
-    // const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);  
-    // await fs.promises.writeFile(  
-    //   outputPath,  
-    //   JSON.stringify(transcript, null, 2)  
-    // );  
-    // console.log(`Transcription completed and saved to ${outputPath}`);
-    // return {transcript, paragraphs, videoId}  
+    // Optionally save the transcription to a file, if needed  
+    const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);  
+    await fs.promises.writeFile(  
+      outputPath,  
+      JSON.stringify(transcript, null, 2)  
+    );  
+    console.log(`Transcription completed and saved to ${outputPath}`);
+    return {transcript, paragraphs, videoId}  
   } catch (error) {
     console.error(`Error processing video ${videoUrl}:`, error);
     throw error;
