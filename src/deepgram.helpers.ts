@@ -88,24 +88,24 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
     throw error;
   }
 }
-
-export async function processVideo(videoUrl: string): Promise<TranscriptionResult> {
+// : Promise<TranscriptionResult>
+export async function processVideo(videoUrl: string) {
   try {
     console.log(`Processing video ${videoUrl}...`);
 
     const { audioPath, videoId } = await downloadVideo(videoUrl);
     console.log(`Audio downloaded for ${videoId}`);
 
-    const { transcript, paragraphs } = await transcribeAudio(audioPath);
+    // const { transcript, paragraphs } = await transcribeAudio(audioPath);
 
-    // Optionally save the transcription to a file, if needed  
-    const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);  
-    await fs.promises.writeFile(  
-      outputPath,  
-      JSON.stringify(transcript, null, 2)  
-    );  
-    console.log(`Transcription completed and saved to ${outputPath}`);
-    return {transcript, paragraphs, videoId}  
+    // // Optionally save the transcription to a file, if needed  
+    // const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);  
+    // await fs.promises.writeFile(  
+    //   outputPath,  
+    //   JSON.stringify(transcript, null, 2)  
+    // );  
+    // console.log(`Transcription completed and saved to ${outputPath}`);
+    // return {transcript, paragraphs, videoId}  
   } catch (error) {
     console.error(`Error processing video ${videoUrl}:`, error);
     throw error;
