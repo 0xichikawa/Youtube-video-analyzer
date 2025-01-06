@@ -1,5 +1,8 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 interface VideoData {
     id: string;
@@ -42,10 +45,6 @@ export async function saveToGoogleSheets(data: VideoData[]) {
     console.log("Saved data to Google Sheets successfully.");
 }
 
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 async function clearGoogleSheet() {
     console.log("Clearing Google Sheets...");
 
@@ -84,8 +83,8 @@ async function clearGoogleSheet() {
     }
 }
 
-clearGoogleSheet()
-    .then(() => {
-        console.log("Data saving process completed.");
-    })
-    .catch(console.error);;
+// clearGoogleSheet()
+//     .then(() => {
+//         console.log("Data saving process completed.");
+//     })
+//     .catch(console.error);;

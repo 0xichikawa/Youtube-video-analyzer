@@ -4,8 +4,7 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "NODE_ENV=local nodemon",
-    "start": "ts-node index.ts",
-    "clear": "ts-node src/googleSheet.helper.ts"
+    "start": "ts-node index.ts"
   },
   "dependencies": {
     "@deepgram/sdk": "^3.9.0",
@@ -23,8 +22,7 @@
     "openai": "^4.76.0",
     "tiktoken": "^1.0.17",
     "youtube-dl-exec": "^3.0.12",
-    "youtube-sr": "^4.3.11",
-    "ytdl-core": "^4.11.5"
+    "youtube-sr": "^4.3.11"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

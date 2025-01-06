@@ -40,7 +40,7 @@ async function main(videoUrls: string[], articleUrl: string): Promise<void> {
     // Process each video sequentially  
     for (const videoUrl of videoUrls) {
       await processSingleVideo(videoUrl, legalRules);
-      await delay(5000); // Delay of 3 seconds after processing each video  
+      await delay(5000); // Delay of 5 seconds after processing each video  
     }
 
     console.log("Token cost:", tokenCosts);
@@ -56,10 +56,14 @@ async function delay(ms: number): Promise<void> {
 async function run() {
   const rawData = fs.readFileSync('scrapedVideoLinks.json', 'utf-8');
   // Parse the JSON data  
-  const scrapedVideoUrls: string[] = JSON.parse(rawData);
+  // const scrapedVideoUrls: string[] = JSON.parse(rawData);
 
   // const scrapedVideoUrls = await getVideoLinks(CHANNEL_URL);
-  console.log("Scraped video URLs:", scrapedVideoUrls);
+  const scrapedVideoUrls = [
+    "https://www.youtube.com/watch?v=wFw4TovEicE",
+    "https://www.youtube.com/watch?v=p76oc2yfcX0",
+    "https://www.youtube.com/watch?v=ULDZk6FoAiY"
+  ]
 
   if (!scrapedVideoUrls.length) {
     console.error("No video URLs found. Exiting.");
