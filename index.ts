@@ -7,27 +7,25 @@ import { getVideoLinks } from "./src/youtube.helpers";
 
 const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; // Channel videos page  
 
-
 async function processSingleVideo(videoUrl: string, extractedRules: string[], maxRetries = 3): Promise<void> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // const { paragraphs, videoId } = 
-      await processVideo(videoUrl);
-      // console.log("Processing completed for video:", videoId);
+      const { paragraphs, videoId } = await processVideo(videoUrl);
+      console.log("Processing completed for video:", videoId);
 
-      // const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
+      const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
 
-      // const sheetsData = results.map(result => ({
-      //   id: videoId,
-      //   transcript: result.transcript,
-      //   violated_reason: result.violatedReason,
-      //   start: result.start,
-      //   end: result.end,
-      //   video_link: videoUrl
-      // }));
+      const sheetsData = results.map(result => ({
+        id: videoId,
+        transcript: result.transcript,
+        violated_reason: result.violatedReason,
+        start: result.start,
+        end: result.end,
+        video_link: videoUrl
+      }));
 
-      // await saveToGoogleSheets(sheetsData);
-      // break;
+      await saveToGoogleSheets(sheetsData);
+      break;
 
     } catch (error) {
       if (attempt === maxRetries) throw error;
@@ -61,16 +59,16 @@ async function delay(ms: number): Promise<void> {
 async function run() {
   const rawData = fs.readFileSync('scrapedVideoLinks.json', 'utf-8');
   // Parse the JSON data  
-  // const scrapedVideoUrls: string[] = JSON.parse(rawData);
+  const scrapedVideoUrls: string[] = JSON.parse(rawData);
 
   // const videoUrls = await getVideoLinks(CHANNEL_URL);
   // console.log("videoUrls-->", videoUrls);
   
-  const scrapedVideoUrls = [
-    "https://www.youtube.com/watch?v=wFw4TovEicE",
-    "https://www.youtube.com/watch?v=p76oc2yfcX0",
-    "https://www.youtube.com/watch?v=ULDZk6FoAiY"
-  ]
+  // const scrapedVideoUrls = [
+  //   "https://www.youtube.com/watch?v=wFw4TovEicE",
+  //   "https://www.youtube.com/watch?v=p76oc2yfcX0",
+  //   "https://www.youtube.com/watch?v=ULDZk6FoAiY"
+  // ]
 
   if (!scrapedVideoUrls.length) {
     console.error("No video URLs found. Exiting.");
