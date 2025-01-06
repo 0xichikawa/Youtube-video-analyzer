@@ -28,6 +28,16 @@
     events "^3.3.0"
     ws "^8.17.0"
 
+"@derhuerst/http-basic@^8.2.0":
+  version "8.2.4"
+  resolved "https://registry.npmjs.org/@derhuerst/http-basic/-/http-basic-8.2.4.tgz"
+  integrity sha512-F9rL9k9Xjf5blCz8HsJRO4diy111cayL2vkY2XE4r4t3n0yPXVYy3KD3nJ1qbrSn9743UWSXH4IwuCa/HWlGFw==
+  dependencies:
+    caseless "^0.12.0"
+    concat-stream "^2.0.0"
+    http-response-object "^3.0.1"
+    parse-cache-control "^1.0.1"
+
 "@distube/ytdl-core@^4.15.8":
   version "4.15.8"
   resolved "https://registry.npmjs.org/@distube/ytdl-core/-/ytdl-core-4.15.8.tgz"
@@ -382,6 +392,11 @@
   integrity sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==
   dependencies:
     undici-types "~6.20.0"
+
+"@types/node@^10.0.3":
+  version "10.17.60"
+  resolved "https://registry.npmjs.org/@types/node/-/node-10.17.60.tgz"
+  integrity sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==
 
 "@types/node@^18.11.18":
   version "18.19.67"
@@ -750,6 +765,11 @@ buffer-equal-constant-time@1.0.1:
   resolved "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz"
   integrity sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==
 
+buffer-from@^1.0.0:
+  version "1.1.2"
+  resolved "https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz"
+  integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
+
 call-bind@^1.0.2, call-bind@^1.0.5, call-bind@^1.0.6, call-bind@^1.0.7:
   version "1.0.7"
   resolved "https://registry.npmjs.org/call-bind/-/call-bind-1.0.7.tgz"
@@ -765,6 +785,11 @@ callsites@^3.0.0:
   version "3.1.0"
   resolved "https://registry.npmjs.org/callsites/-/callsites-3.1.0.tgz"
   integrity sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
+
+caseless@^0.12.0:
+  version "0.12.0"
+  resolved "https://registry.npmjs.org/caseless/-/caseless-0.12.0.tgz"
+  integrity sha512-4tYFyifaFfGacoiObjJegolkwSU4xQNGbVgUiNYVUxbQ2x2lUsFvY4hVgVzGiIe6WLOPqycWXA40l+PWsxthUw==
 
 chalk@^4.0.0:
   version "4.1.2"
@@ -850,6 +875,16 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
+
+concat-stream@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/concat-stream/-/concat-stream-2.0.0.tgz"
+  integrity sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==
+  dependencies:
+    buffer-from "^1.0.0"
+    inherits "^2.0.3"
+    readable-stream "^3.0.2"
+    typedarray "^0.0.6"
 
 convert-hrtime@^5.0.0:
   version "5.0.0"
@@ -1091,6 +1126,11 @@ entities@^4.2.0, entities@^4.5.0:
   version "4.5.0"
   resolved "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz"
   integrity sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==
+
+env-paths@^2.2.0:
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/env-paths/-/env-paths-2.2.1.tgz"
+  integrity sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==
 
 es-abstract@^1.22.1, es-abstract@^1.22.3, es-abstract@^1.23.0, es-abstract@^1.23.2, es-abstract@^1.23.5:
   version "1.23.5"
@@ -1473,6 +1513,16 @@ fastq@^1.6.0:
   dependencies:
     reusify "^1.0.4"
 
+ffmpeg-static@^5.2.0:
+  version "5.2.0"
+  resolved "https://registry.npmjs.org/ffmpeg-static/-/ffmpeg-static-5.2.0.tgz"
+  integrity sha512-WrM7kLW+do9HLr+H6tk7LzQ7kPqbAgLjdzNE32+u3Ff11gXt9Kkkd2nusGFrlWMIe+XaA97t+I8JS7sZIrvRgA==
+  dependencies:
+    "@derhuerst/http-basic" "^8.2.0"
+    env-paths "^2.2.0"
+    https-proxy-agent "^5.0.0"
+    progress "^2.0.3"
+
 file-entry-cache@^8.0.0:
   version "8.0.0"
   resolved "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-8.0.0.tgz"
@@ -1812,6 +1862,13 @@ http-proxy-agent@^5.0.0:
     "@tootallnate/once" "2"
     agent-base "6"
     debug "4"
+
+http-response-object@^3.0.1:
+  version "3.0.2"
+  resolved "https://registry.npmjs.org/http-response-object/-/http-response-object-3.0.2.tgz"
+  integrity sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==
+  dependencies:
+    "@types/node" "^10.0.3"
 
 https-proxy-agent@^5.0.0:
   version "5.0.1"
@@ -2459,6 +2516,11 @@ parent-module@^1.0.0:
   dependencies:
     callsites "^3.0.0"
 
+parse-cache-control@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/parse-cache-control/-/parse-cache-control-1.0.1.tgz"
+  integrity sha512-60zvsJReQPX5/QP0Kzfd/VrpjScIQ7SHBW6bFCYfEP+fp0Eppr1SHhIO5nd1PjZtvclzSzES9D/p5nFJurwfWg==
+
 parse-ms@^2.1.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/parse-ms/-/parse-ms-2.1.0.tgz"
@@ -2540,6 +2602,11 @@ pretty-ms@~7.0.1:
   dependencies:
     parse-ms "^2.1.0"
 
+progress@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/progress/-/progress-2.0.3.tgz"
+  integrity sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==
+
 proto3-json-serializer@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmjs.org/proto3-json-serializer/-/proto3-json-serializer-2.0.2.tgz"
@@ -2614,7 +2681,7 @@ queue-microtask@^1.2.2:
   resolved "https://registry.npmjs.org/queue-microtask/-/queue-microtask-1.2.3.tgz"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-readable-stream@^3.1.1:
+readable-stream@^3.0.2, readable-stream@^3.1.1:
   version "3.6.2"
   resolved "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz"
   integrity sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==
@@ -3086,6 +3153,11 @@ typed-array-length@^1.0.6:
     is-typed-array "^1.1.13"
     possible-typed-array-names "^1.0.0"
     reflect.getprototypeof "^1.0.6"
+
+typedarray@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.npmjs.org/typedarray/-/typedarray-0.0.6.tgz"
+  integrity sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==
 
 typescript@^5.6.3, typescript@>=2.7, typescript@>=4.2.0:
   version "5.7.2"
