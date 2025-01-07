@@ -1,7 +1,7 @@
 import { createClient, PrerecordedSchema } from "@deepgram/sdk";
 import * as fs from "fs";
 import * as path from "path";
-import { downloadVideo } from "./youtube.helpers";
+import { downloadAudio } from "./youtube.helpers";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -88,7 +88,7 @@ export async function processVideo(videoUrl: string): Promise<TranscriptionResul
   try {
     console.log(`Processing video ${videoUrl}...`);
 
-    const { audioPath, videoId } = await downloadVideo(videoUrl);
+    const { audioPath, videoId } = await downloadAudio(videoUrl);
     console.log(`Audio downloaded for ${videoId}`);
 
     const { transcript, paragraphs } = await transcribeAudio(audioPath);
