@@ -52,7 +52,7 @@ import youtubedl, { Payload } from "youtube-dl-exec";
 //         .audioBitrate('128k')
 //         .audioChannels(2)
 //         .audioFrequency(44100)
-//         .outputOptions('-y') // Overwrite output file if exists
+//         .outputOptions('-y')
 //         .on('progress', (progress) => {
 //           console.log(`Processing: ${progress.percent}%`);
 //         })
@@ -90,123 +90,202 @@ import youtubedl, { Payload } from "youtube-dl-exec";
 //   }
 // }
 
+export async function downloadAudio(
+  videoUrl: string
+): Promise<{ audioPath: string; videoId: string }> {
+  try {
+    const agent = ytdl.createAgent(
+      JSON.parse(fs.readFileSync(path.join(__dirname, 'cookies.json'), 'utf-8'))
+    )
+
+    const videoInfo = await ytdl.getInfo(videoUrl, { agent })
+    const videoId = videoInfo.videoDetails.videoId
+
+    const dataDir = path.join(__dirname, '..', 'data')
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+
+    const tempVideoPath = path.join(dataDir, `${videoId}.mp4`)
+    const finalAudioPath = path.join(dataDir, `${videoId}.mp3`)
+
+    if (fs.existsSync(finalAudioPath)) {
+      return { audioPath: finalAudioPath, videoId }
+    }
+
+    // Step 1: Download video
+    await new Promise<void>((resolve, reject) => {
+      const stream = ytdl(videoUrl, {
+        agent,
+        quality: 'highest'
+      })
+
+      let lastPercent = 0
+      stream.on('progress', (_, downloaded, total) => {
+        const percent = Math.floor((downloaded / total) * 100)
+        if (percent > lastPercent) {
+          lastPercent = percent
+          console.log(`Downloading video: ${percent}%`)
+        }
+      })
+
+      const writeStream = fs.createWriteStream(tempVideoPath)
+      
+      stream.pipe(writeStream)
+        .on('finish', () => {
+          console.log('Video download completed')
+          resolve()
+        })
+        .on('error', reject)
+    })
+
+    // Step 2: Convert to MP3
+    await new Promise<void>((resolve, reject) => {
+      ffmpeg(tempVideoPath)  // Takes the input video file path
+      .toFormat('mp3')     // Sets output format to MP3
+      .audioBitrate('192k') // Sets high quality bitrate (192 kilobits per second)
+      .audioChannels(2)     // Creates stereo audio (2 channels)
+      .audioFrequency(44100) // CD-quality sample rate (44.1 kHz)
+      .outputOptions('-y')   // Automatically overwrites output file if it exists
+      .on('progress', (progress) => {
+        const percent = progress.percent || 0  // Gets conversion progress, defaults to 0
+        console.log(`Converting to MP3: ${Math.round(percent)}%`) // Logs rounded percentage
+      })
+        .on('end', () => {
+          // Clean up temp video file
+          fs.unlinkSync(tempVideoPath)
+          console.log('Conversion completed')
+          resolve()
+        })
+        .on('error', reject)
+        .save(finalAudioPath)
+    })
+
+    return { audioPath: finalAudioPath, videoId }
+
+  } catch (error) {
+    console.error('Error in downloadVideo:', error)
+    throw error
+  }
+}
+
 interface Cookie {  
   name: string;  
   value: string;  
 }  
 
-export async function downloadVideo(videoUrl: string): Promise<{ audioPath: string; videoId: string }> {  
-  try {  
-    // Load cookies  
-    const cookies: Cookie[] = JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8"));  
+// export async function downloadAudio(videoUrl: string): Promise<{ audioPath: string; videoId: string }> {  
+//   try {  
+//     // Load cookies  
+//     const cookies: Cookie[] = JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8"));  
 
-    // Map cookies to the required format for the proxy agent  
-    const cookieHeaders = cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));  
+//     // Map cookies to the required format for the proxy agent  
+//     const cookieHeaders = cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));  
 
-    // Load proxies  
-    const proxies: string[] = JSON.parse(fs.readFileSync(path.join(__dirname, "proxies.json"), "utf-8"));  
-    const proxyIndex = Math.floor(Math.random() * proxies.length);  
-    const proxy = proxies[proxyIndex];  
+//     // Load proxies  
+//     const proxies: string[] = JSON.parse(fs.readFileSync(path.join(__dirname, "proxies.json"), "utf-8"));  
+//     const proxyIndex = Math.floor(Math.random() * proxies.length);  
+//     const proxy = proxies[proxyIndex];
 
-    // Debug: Log the selected proxy before using it  
-    console.log(`Selected proxy: ${proxy}`);  
+//     // Debug: Log the selected proxy before using it  
+//     console.log(`Selected proxy: ${proxy}`);  
 
-    // Format the proxy URL correctly  
-    const formattedProxy = `http://${proxy}`; // Change to https:// if you need HTTPS proxy  
+//     // Format the proxy URL correctly  
+//     const formattedProxy = `https://${proxy}`; // Change to https:// if you need HTTPS proxy  
 
-    // Ensure the formatted proxy URL starts with http:// or https://  
-    if (!/^https?:\/\//.test(formattedProxy)) {  
-      throw new Error(`Invalid proxy URL: "${formattedProxy}". It must start with http:// or https://`);  
-    }  
+//     // Ensure the formatted proxy URL starts with http:// or https://  
+//     if (!/^https?:\/\//.test(formattedProxy)) {  
+//       throw new Error(`Invalid proxy URL: "${formattedProxy}". It must start with http:// or https://`);  
+//     }  
 
-    // Create a proxy agent with the formatted proxy and cookies  
-    const agent = ytdl.createProxyAgent({ uri: formattedProxy }, cookieHeaders);  
+//     // Create a proxy agent with the formatted proxy and cookies  
+//     const agent = ytdl.createProxyAgent({ uri: formattedProxy }, cookieHeaders);  
 
-    // Obtain video info using the created agent  
-    const videoInfo = await ytdl.getInfo(videoUrl, { agent });  
-    const videoId = videoInfo.videoDetails.videoId.replace(/[^a-zA-Z0-9-_]/g, '');  
+//     // Obtain video info using the created agent  
+//     const videoInfo = await ytdl.getInfo(videoUrl, { agent });  
+//     const videoId = videoInfo.videoDetails.videoId.replace(/[^a-zA-Z0-9-_]/g, '');  
 
-    const dataDir = path.join(__dirname, "..", "data");  
-    if (!fs.existsSync(dataDir)) {  
-      fs.mkdirSync(dataDir, { recursive: true });  
-    }  
+//     const dataDir = path.join(__dirname, "..", "data");  
+//     if (!fs.existsSync(dataDir)) {  
+//       fs.mkdirSync(dataDir, { recursive: true });  
+//     }  
 
-    const tempAudioPath = path.join(dataDir, `${videoId}.temp.mp4`);  
-    const audioPath = path.join(dataDir, `${videoId}.mp3`);  
+//     const tempAudioPath = path.join(dataDir, `${videoId}.temp.mp4`);  
+//     const audioPath = path.join(dataDir, `${videoId}.mp3`);  
 
-    if (fs.existsSync(audioPath)) {  
-      console.log(`Audio file already exists for ${videoId}`);  
-      return { audioPath, videoId };  
-    }  
+//     if (fs.existsSync(audioPath)) {  
+//       console.log(`Audio file already exists for ${videoId}`);  
+//       return { audioPath, videoId };  
+//     }  
 
-    return new Promise((resolve, reject) => {  
-      const stream = ytdl(videoUrl, {  
-        agent, // Use the proxy agent  
-        filter: format => format.audioBitrate !== null && format.container === 'mp4',  
-      });  
+//     return new Promise((resolve, reject) => {  
+//       const stream = ytdl(videoUrl, {  
+//         agent, // Use the proxy agent  
+//         filter: format => format.audioBitrate !== null && format.container === 'mp4',  
+//       });  
 
-      const writeStream = fs.createWriteStream(tempAudioPath);  
-      let lastPercent = 0;  
+//       const writeStream = fs.createWriteStream(tempAudioPath);  
+//       let lastPercent = 0;  
 
-      stream.on('error', (error) => {  
-        console.error("Download stream error:", error);  
-        reject(error);  
-      });  
+//       stream.on('error', (error) => {  
+//         console.error("Download stream error:", error);  
+//         reject(error);  
+//       });  
 
-      stream.on('progress', (chunkLength, downloaded, total) => {  
-        const percent = Math.floor((downloaded / total) * 100);  
-        if (percent > lastPercent) {  
-          lastPercent = percent;  
-          console.log(`Downloading: ${percent}%`);  
-        }  
-      });  
+//       stream.on('progress', (chunkLength, downloaded, total) => {  
+//         const percent = Math.floor((downloaded / total) * 100);  
+//         if (percent > lastPercent) {  
+//           lastPercent = percent;  
+//           console.log(`Downloading: ${percent}%`);  
+//         }  
+//       });  
 
-      stream.on('end', () => {  
-        console.log('Download stream completed');  
-      });  
+//       stream.on('end', () => {  
+//         console.log('Download stream completed');  
+//       });  
 
-      stream.pipe(writeStream);  
+//       stream.pipe(writeStream);  
 
-      writeStream.on("finish", () => {  
-        console.log(`Download completed, now converting to MP3...`);  
+//       writeStream.on("finish", () => {  
+//         console.log(`Download completed, now converting to MP3...`);  
 
-        ffmpeg(tempAudioPath)  
-          .toFormat('mp3')  
-          .audioBitrate(128)  
-          .audioChannels(2)  
-          .audioFrequency(44100)  
-          .outputOptions('-y')  
-          .on('progress', (progress) => {  
-            console.log(`Processing: ${progress.percent}%`);  
-          })  
-          .on('end', () => {  
-            console.log(`Successfully converted and saved audio to ${audioPath}`);  
-            fs.unlinkSync(tempAudioPath); // Clean up the temporary file  
-            resolve({ audioPath, videoId });  
-          })  
-          .on('error', (error) => {  
-            console.error('FFmpeg error:', error);  
-            if (fs.existsSync(tempAudioPath)) {  
-              fs.unlinkSync(tempAudioPath);  
-            }  
-            reject(error);  
-          })  
-          .save(audioPath);  
-      });  
+//         ffmpeg(tempAudioPath)  
+//           .toFormat('mp3')  
+//           .audioBitrate(128)  
+//           .audioChannels(2)  
+//           .audioFrequency(44100)  
+//           .outputOptions('-y')  
+//           .on('progress', (progress) => {  
+//             console.log(`Processing: ${progress.percent}%`);  
+//           })  
+//           .on('end', () => {  
+//             console.log(`Successfully converted and saved audio to ${audioPath}`);  
+//             fs.unlinkSync(tempAudioPath); // Clean up the temporary file  
+//             resolve({ audioPath, videoId });  
+//           })  
+//           .on('error', (error) => {  
+//             console.error('FFmpeg error:', error);  
+//             if (fs.existsSync(tempAudioPath)) {  
+//               fs.unlinkSync(tempAudioPath);  
+//             }  
+//             reject(error);  
+//           })  
+//           .save(audioPath);  
+//       });  
 
-      writeStream.on("error", (error) => {  
-        console.error("Write stream error:", error);  
-        if (fs.existsSync(tempAudioPath)) {  
-          fs.unlinkSync(tempAudioPath);  
-        }  
-        reject(error);  
-      });  
-    });  
-  } catch (error) {  
-    console.error("Error in downloadVideo:", error);  
-    throw error;  
-  }  
-}  
+//       writeStream.on("error", (error) => {  
+//         console.error("Write stream error:", error);  
+//         if (fs.existsSync(tempAudioPath)) {  
+//           fs.unlinkSync(tempAudioPath);  
+//         }  
+//         reject(error);  
+//       });  
+//     });  
+//   } catch (error) {  
+//     console.error("Error in downloadVideo:", error);  
+//     throw error;  
+//   }  
+// }  
 
 export async function getVideoLinks(channelUrl: string): Promise<string[]> {
   const scrapedVideoUrls: string[] = [];
