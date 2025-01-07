@@ -90,82 +90,123 @@ import youtubedl, { Payload } from "youtube-dl-exec";
 //   }
 // }
 
-export async function downloadVideo(
-  videoUrl: string,
-): Promise<{ audioPath: string; videoId: string }> {
-  try {
-    const agent = ytdl.createAgent(JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8")));
-    const videoInfo = await ytdl.getInfo(videoUrl, { agent });
-    const videoId = videoInfo.videoDetails.videoId.replace(/[^a-zA-Z0-9-_]/g, ''); // Sanitize  
+interface Cookie {  
+  name: string;  
+  value: string;  
+}  
 
-    const dataDir = path.join(__dirname, "..", "data");
+export async function downloadVideo(videoUrl: string): Promise<{ audioPath: string; videoId: string }> {  
+  try {  
+    // Load cookies  
+    const cookies: Cookie[] = JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8"));  
 
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
+    // Map cookies to the required format for the proxy agent  
+    const cookieHeaders = cookies.map(cookie => ({ name: cookie.name, value: cookie.value }));  
 
-    const tempAudioPath = path.join(dataDir, `${videoId}.temp.mp4`); // Temporary file path  
-    const audioPath = path.join(dataDir, `${videoId}.mp3`);
+    // Load proxies  
+    const proxies: string[] = JSON.parse(fs.readFileSync(path.join(__dirname, "proxies.json"), "utf-8"));  
+    const proxyIndex = Math.floor(Math.random() * proxies.length);  
+    const proxy = proxies[proxyIndex];  
 
-    if (fs.existsSync(audioPath)) {
-      console.log(`Audio file already exists for ${videoId}`);
-      return { audioPath, videoId };
-    }
+    // Debug: Log the selected proxy before using it  
+    console.log(`Selected proxy: ${proxy}`);  
 
-    return new Promise((resolve, reject) => {
-      const stream = ytdl(videoUrl, {
-        filter: format => format.audioBitrate !== null && format.container === 'mp4', // Filter for mp4 formats with audio  
-        agent,
-      });
+    // Format the proxy URL correctly  
+    const formattedProxy = `http://${proxy}`; // Change to https:// if you need HTTPS proxy  
 
-      const writeStream = fs.createWriteStream(tempAudioPath);
-      let lastPercent = 0;
+    // Ensure the formatted proxy URL starts with http:// or https://  
+    if (!/^https?:\/\//.test(formattedProxy)) {  
+      throw new Error(`Invalid proxy URL: "${formattedProxy}". It must start with http:// or https://`);  
+    }  
 
-      // Track download progress  
-      stream.on('progress', (chunkLength, downloaded, total) => {
-        const percent = Math.floor((downloaded / total) * 100);
-        if (percent > lastPercent) {
-          lastPercent = percent;
-          console.log(`Downloading: ${percent}%`);
-        }
-      });
+    // Create a proxy agent with the formatted proxy and cookies  
+    const agent = ytdl.createProxyAgent({ uri: formattedProxy }, cookieHeaders);  
 
-      stream.pipe(writeStream);
+    // Obtain video info using the created agent  
+    const videoInfo = await ytdl.getInfo(videoUrl, { agent });  
+    const videoId = videoInfo.videoDetails.videoId.replace(/[^a-zA-Z0-9-_]/g, '');  
 
-      writeStream.on("finish", () => {
-        console.log(`Download completed, now converting to MP3...`);
+    const dataDir = path.join(__dirname, "..", "data");  
+    if (!fs.existsSync(dataDir)) {  
+      fs.mkdirSync(dataDir, { recursive: true });  
+    }  
 
-        ffmpeg(tempAudioPath)
-          .toFormat('mp3')
-          .audioBitrate(128)
-          .audioChannels(2)
-          .audioFrequency(44100)
-          .outputOptions('-y')
-          .on('progress', (progress) => {
-            console.log(`Processing: ${progress.percent}%`);
-          })
-          .on('end', () => {
-            console.log(`Successfully converted and saved audio to ${audioPath}`);
-            fs.unlinkSync(tempAudioPath); // Clean up temporary file  
-            resolve({ audioPath, videoId });
-          })
-          .on('error', (error) => {
-            console.error('FFmpeg error:', error);
-            reject(error);
-          })
-          .save(audioPath);
-      });
+    const tempAudioPath = path.join(dataDir, `${videoId}.temp.mp4`);  
+    const audioPath = path.join(dataDir, `${videoId}.mp3`);  
 
-      writeStream.on("error", (error) => {
-        console.error("Write stream error:", error);
-        reject(error);
-      });
-    });
-  } catch (error) {
-    console.error("Error in downloadVideo:", error);
-    throw error;
-  }
-}
+    if (fs.existsSync(audioPath)) {  
+      console.log(`Audio file already exists for ${videoId}`);  
+      return { audioPath, videoId };  
+    }  
+
+    return new Promise((resolve, reject) => {  
+      const stream = ytdl(videoUrl, {  
+        agent, // Use the proxy agent  
+        filter: format => format.audioBitrate !== null && format.container === 'mp4',  
+      });  
+
+      const writeStream = fs.createWriteStream(tempAudioPath);  
+      let lastPercent = 0;  
+
+      stream.on('error', (error) => {  
+        console.error("Download stream error:", error);  
+        reject(error);  
+      });  
+
+      stream.on('progress', (chunkLength, downloaded, total) => {  
+        const percent = Math.floor((downloaded / total) * 100);  
+        if (percent > lastPercent) {  
+          lastPercent = percent;  
+          console.log(`Downloading: ${percent}%`);  
+        }  
+      });  
+
+      stream.on('end', () => {  
+        console.log('Download stream completed');  
+      });  
+
+      stream.pipe(writeStream);  
+
+      writeStream.on("finish", () => {  
+        console.log(`Download completed, now converting to MP3...`);  
+
+        ffmpeg(tempAudioPath)  
+          .toFormat('mp3')  
+          .audioBitrate(128)  
+          .audioChannels(2)  
+          .audioFrequency(44100)  
+          .outputOptions('-y')  
+          .on('progress', (progress) => {  
+            console.log(`Processing: ${progress.percent}%`);  
+          })  
+          .on('end', () => {  
+            console.log(`Successfully converted and saved audio to ${audioPath}`);  
+            fs.unlinkSync(tempAudioPath); // Clean up the temporary file  
+            resolve({ audioPath, videoId });  
+          })  
+          .on('error', (error) => {  
+            console.error('FFmpeg error:', error);  
+            if (fs.existsSync(tempAudioPath)) {  
+              fs.unlinkSync(tempAudioPath);  
+            }  
+            reject(error);  
+          })  
+          .save(audioPath);  
+      });  
+
+      writeStream.on("error", (error) => {  
+        console.error("Write stream error:", error);  
+        if (fs.existsSync(tempAudioPath)) {  
+          fs.unlinkSync(tempAudioPath);  
+        }  
+        reject(error);  
+      });  
+    });  
+  } catch (error) {  
+    console.error("Error in downloadVideo:", error);  
+    throw error;  
+  }  
+}  
 
 export async function getVideoLinks(channelUrl: string): Promise<string[]> {
   const scrapedVideoUrls: string[] = [];
