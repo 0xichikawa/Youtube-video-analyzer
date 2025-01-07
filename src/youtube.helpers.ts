@@ -92,93 +92,80 @@ import youtubedl, { Payload } from "youtube-dl-exec";
 
 export async function downloadVideo(
   videoUrl: string,
-): Promise<{ audioPath: string; videoId: string }> { 
-  try {  
+): Promise<{ audioPath: string; videoId: string }> {
+  try {
     const agent = ytdl.createAgent(JSON.parse(fs.readFileSync(path.join(__dirname, "cookies.json"), "utf-8")));
-    
-    const videoInfo = await ytdl.getInfo(videoUrl, { agent });  
+    const videoInfo = await ytdl.getInfo(videoUrl, { agent });
     const videoId = videoInfo.videoDetails.videoId.replace(/[^a-zA-Z0-9-_]/g, ''); // Sanitize  
-    
-    const dataDir = path.join(__dirname, "..", "data");  
 
-    if (!fs.existsSync(dataDir)) {  
-      fs.mkdirSync(dataDir, { recursive: true });  
-    }  
+    const dataDir = path.join(__dirname, "..", "data");
+
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
 
     const tempAudioPath = path.join(dataDir, `${videoId}.temp.mp4`); // Temporary file path  
-    const audioPath = path.join(dataDir, `${videoId}.mp3`);  
+    const audioPath = path.join(dataDir, `${videoId}.mp3`);
 
-    if (fs.existsSync(audioPath)) {  
-      console.log(`Audio file already exists for ${videoId}`);  
-      return { audioPath, videoId };  
-    }  
-    
-    return new Promise((resolve, reject) => {  
-      const stream = ytdl(videoUrl, {  
+    if (fs.existsSync(audioPath)) {
+      console.log(`Audio file already exists for ${videoId}`);
+      return { audioPath, videoId };
+    }
+
+    return new Promise((resolve, reject) => {
+      const stream = ytdl(videoUrl, {
         filter: format => format.audioBitrate !== null && format.container === 'mp4', // Filter for mp4 formats with audio  
-        agent,  
-      });  
-      
-      // Add error handler for the stream
-      stream.on('error', (error) => {
-        console.error('Stream error:', error);
-        reject(error);
+        agent,
       });
 
-      const writeStream = fs.createWriteStream(tempAudioPath);  
-      let lastPercent = 0;  
+      const writeStream = fs.createWriteStream(tempAudioPath);
+      let lastPercent = 0;
 
       // Track download progress  
-      stream.on('progress', (chunkLength, downloaded, total) => {  
-        const percent = Math.floor((downloaded / total) * 100);  
-        if (percent > lastPercent) {  
-          lastPercent = percent;  
-          console.log(`Downloading: ${percent}%`);  
-        }  
-      });  
-      
-            
-      // // Add error handler for the pipe operation
-      // const pipe = stream.pipe(writeStream);
-      // pipe.on('error', (error) => {
-      //   console.error('Pipe error:', error);
-      //   reject(error);
-      // });
+      stream.on('progress', (chunkLength, downloaded, total) => {
+        const percent = Math.floor((downloaded / total) * 100);
+        if (percent > lastPercent) {
+          lastPercent = percent;
+          console.log(`Downloading: ${percent}%`);
+        }
+      });
 
-      writeStream.on("finish", () => {  
-        console.log(`Download completed, now converting to MP3...`);  
+      stream.pipe(writeStream);
 
-        ffmpeg(tempAudioPath)  
-          .toFormat('mp3')  
-          .audioBitrate(128)  
-          .audioChannels(2)  
-          .audioFrequency(44100)  
-          .outputOptions('-y')  
-          .on('progress', (progress) => {  
-            console.log(`Processing: ${progress.percent}%`);  
-          })  
-          .on('end', () => {  
-            console.log(`Successfully converted and saved audio to ${audioPath}`);  
+      writeStream.on("finish", () => {
+        console.log(`Download completed, now converting to MP3...`);
+
+        ffmpeg(tempAudioPath)
+          .toFormat('mp3')
+          .audioBitrate(128)
+          .audioChannels(2)
+          .audioFrequency(44100)
+          .outputOptions('-y')
+          .on('progress', (progress) => {
+            console.log(`Processing: ${progress.percent}%`);
+          })
+          .on('end', () => {
+            console.log(`Successfully converted and saved audio to ${audioPath}`);
             fs.unlinkSync(tempAudioPath); // Clean up temporary file  
-            resolve({ audioPath, videoId });  
-          })  
-          .on('error', (error) => {  
-            console.error('FFmpeg error:', error);  
-            reject(error);  
-          })  
-          .save(audioPath);  
-      });  
+            resolve({ audioPath, videoId });
+          })
+          .on('error', (error) => {
+            console.error('FFmpeg error:', error);
+            reject(error);
+          })
+          .save(audioPath);
+      });
 
-      writeStream.on("error", (error) => {  
-        console.error("Write stream error:", error);  
-        reject(error);  
-      });  
-    });  
-  } catch (error) {  
-    console.error("Error in downloadVideo:", error);  
-    throw error;  
-  }  
-}  
+      writeStream.on("error", (error) => {
+        console.error("Write stream error:", error);
+        reject(error);
+      });
+    });
+  } catch (error) {
+    console.error("Error in downloadVideo:", error);
+    throw error;
+  }
+}
 
 export async function getVideoLinks(channelUrl: string): Promise<string[]> {
   const scrapedVideoUrls: string[] = [];
