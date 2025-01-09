@@ -13,7 +13,7 @@ interface VideoData {
     video_link: string;
 }
 
-export async function saveToGoogleSheets(data: VideoData[]) {
+export async function saveToGoogleSheets(data: VideoData[], sheetName: string): Promise<void> {
     console.log("Saving to Google Sheets...");
 
     // Create the JWT auth instance  
@@ -27,7 +27,7 @@ export async function saveToGoogleSheets(data: VideoData[]) {
     const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID as string, serviceAccountAuth);
     await doc.loadInfo();
 
-    let sheet = doc.sheetsByTitle[process.env.SHEET_NAME as string];
+    let sheet = doc.sheetsByTitle[sheetName as string];
     if (!sheet) {
         sheet = await doc.addSheet({ title: process.env.SHEET_NAME, headerValues: ['id', 'transcript', 'violated_reason', 'start', 'end', 'video_link'] });
     }

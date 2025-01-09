@@ -25,7 +25,8 @@ interface Paragraph {
 interface TranscriptionResult {
   transcript: string;       // The complete transcript of the audio  
   paragraphs: Paragraph[];   // Array of paragraphs  
-  videoId: string;           // The ID of the video
+  id: string;           // The ID of the video
+  audioPath: string;         // The path to the audio file
 }
 
 /**  
@@ -34,6 +35,7 @@ interface TranscriptionResult {
  * @returns A promise that resolves to an object containing the transcript and its structured details.  
  */
 async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> {
+  console.log(`Transcribing audio file: ${audioPath}`);
   try {
     const audioFile = fs.readFileSync(audioPath);
     const transcriptionOptions: PrerecordedSchema = {
@@ -59,6 +61,7 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
     const alternative = channel?.alternatives?.[0];
 
     const transcript = alternative?.transcript || '';
+    console.log(`Transcript: ${transcript}`);
 
     // Safely handle the paragraphs  
     const paragraphs = alternative?.paragraphs?.paragraphs?.map((paragraph: any) => ({
@@ -76,7 +79,8 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
     return {
       transcript,
       paragraphs,
-      videoId: path.basename(audioPath, ".mp3"),
+      id: path.basename(audioPath),
+      audioPath
     };
   } catch (error) {
     console.error("Error in transcription:", error);
@@ -84,25 +88,47 @@ async function transcribeAudio(audioPath: string): Promise<TranscriptionResult> 
   }
 }
 
-export async function processVideo(videoUrl: string): Promise<TranscriptionResult> {
+export async function processVideoForTranscription(videoUrl: string): Promise<TranscriptionResult> {
   try {
     console.log(`Processing video ${videoUrl}...`);
 
-    const { audioPath, videoId } = await downloadAudio(videoUrl);
-    console.log(`Audio downloaded for ${videoId}`);
+    const { audioPath, id } = await downloadAudio(videoUrl);
+    console.log(`Audio downloaded for ${id}`);
 
     const { transcript, paragraphs } = await transcribeAudio(audioPath);
 
     // Optionally save the transcription to a file, if needed  
-    const outputPath = path.join(__dirname, "..", "data", `${videoId}.json`);  
-    await fs.promises.writeFile(  
-      outputPath,  
-      JSON.stringify(transcript, null, 2)  
-    );  
+    const outputPath = path.join(__dirname, "..", "data", `${id}.json`);
+    await fs.promises.writeFile(
+      outputPath,
+      JSON.stringify(transcript, null, 2)
+    );
     console.log(`Transcription completed and saved to ${outputPath}`);
-    return {transcript, paragraphs, videoId}  
+    return { transcript, audioPath, paragraphs, id }
   } catch (error) {
     console.error(`Error processing video ${videoUrl}:`, error);
+    throw error;
+  }
+}
+
+export async function processAudioForTranscription(audioPath: string): Promise<TranscriptionResult> {
+  try {
+    console.log(`Processing audio ${audioPath}...`);
+    const id = path.basename(audioPath);
+    const audioFile = `${audioPath}.mp3`;
+
+    const { transcript, paragraphs } = await transcribeAudio(audioFile);
+
+    // Optionally save the transcription to a file, if needed  
+    const outputPath = path.join(__dirname, "..", "data", `${id}.json`);
+    await fs.promises.writeFile(
+      outputPath,
+      JSON.stringify(transcript, null, 2)
+    );
+    console.log(`Transcription completed and saved to ${outputPath}`);
+    return { transcript, audioPath, paragraphs, id }
+  } catch (error) {
+    console.error(`Error processing video ${audioPath}:`, error);
     throw error;
   }
 }

@@ -1,85 +1,84 @@
 import * as fs from "fs";
-import { processVideo } from "./src/deepgram.helpers";
+import * as path from "path";
+import dotenv from "dotenv";
 import { extractLegalRules } from "./src/article.helper";
-import { analyzeTranscriptsInParagraphs } from "./src/llm";
-import { saveToGoogleSheets } from "./src/googleSheet.helper";
-import { getVideoLinks } from "./src/youtube.helpers";
+import { processSingleVideo, processSingleAudio } from "./src/youtube.helpers";
+import { delay } from "./src/utils/delay";
+import { processAudioForTranscription } from "./src/deepgram.helpers";
 
-const CHANNEL_URL = 'https://www.youtube.com/c/Ond%C5%99ejKob%C4%9Brsk%C3%BD'; // Channel videos page  
+dotenv.config();
 
-async function processSingleVideo(videoUrl: string, extractedRules: string[], maxRetries = 3): Promise<void> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const { paragraphs, videoId } = await processVideo(videoUrl);
-      console.log("Processing completed for video:", videoId);
+const CONFIG = {
+  VIDEO_LINKS_FILE: 'scrapedVideoLinks.json',
+  PROCESS_DELAY: 5000
+} as const;
 
-      const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
-
-      const sheetsData = results.map(result => ({
-        id: videoId,
-        transcript: result.transcript,
-        violated_reason: result.violatedReason,
-        start: result.start,
-        end: result.end,
-        video_link: videoUrl
-      }));
-
-      await saveToGoogleSheets(sheetsData);
-      break;
-
-    } catch (error) {
-      if (attempt === maxRetries) throw error;
-      const delay = Math.pow(2, attempt) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-async function main(videoUrls: string[], articleUrl: string): Promise<void> {
+async function main(): Promise<void> {
   try {
-    // Extract legal rules once  
+    // const scrapedVideoUrls: string[] = JSON.parse(
+    //   fs.readFileSync(CONFIG.VIDEO_LINKS_FILE, 'utf-8')
+    // );
+    const articleUrl = process.env.ARTICLE_URL;
+    if (!articleUrl) {
+      throw new Error("ARTICLE_URL is not defined in the environment variables.");
+    }
     const { legalRules, tokenCosts } = await extractLegalRules(articleUrl);
 
-    // Process each video sequentially  
-    for (const videoUrl of videoUrls) {
-      await processSingleVideo(videoUrl, legalRules);
-      await delay(5000); // Delay of 5 seconds after processing each video  
+    const patreonAudioDir = path.join(__dirname, 'data', 'patreonAudio');
+    const audioFiles = fs.readdirSync(patreonAudioDir)
+      .filter(file => file.endsWith('.mp3'))
+      .map(file => {
+        const filePath = file.replace('.mp3', '');
+        return path.join(patreonAudioDir, filePath);
+      });    
+    
+    if(!audioFiles.length) {
+      console.log("No audio files found in the directory.");
+      return;
     }
+
+    for (const [index, audioFile] of audioFiles.entries()) {
+      console.log(`Processing audio ${index + 1}/${audioFiles.length}: ${audioFile}`);
+
+      const success = await processSingleAudio(audioFile, legalRules);
+      console.log(success ?
+        `✅ Successfully processed: ${audioFile}` :
+        `❌ Skipping audio due to errors: ${audioFile}`
+      );
+
+      if (index < audioFiles.length - 1) {
+        await delay(CONFIG.PROCESS_DELAY);
+      }
+    }
+
+    // const scrapedVideoUrls = [
+    //   // "https://www.youtube.com/watch?v=wFw4TovEicE",
+    //   // "https://www.youtube.com/watch?v=p76oc2yfcX0"
+    // ]
+
+    // if (!scrapedVideoUrls.length) {
+    //   throw new Error("No video URLs found. Exiting.");
+    // }
+
+    // for (const [index, videoUrl] of scrapedVideoUrls.entries()) {
+    //   console.log(`Processing video ${index + 1}/${scrapedVideoUrls.length}: ${videoUrl}`);
+
+    //   const success = await processSingleVideo(videoUrl, legalRules);
+    //   console.log(success ?
+    //     `✅ Successfully processed: ${videoUrl}` :
+    //     `❌ Skipping video due to errors: ${videoUrl}`
+    //   );
+
+    //   if (index < scrapedVideoUrls.length - 1) {
+    //     await delay(CONFIG.PROCESS_DELAY);
+    //   }
+    // }
 
     console.log("Token cost:", tokenCosts);
   } catch (error) {
     console.error("Error in main process:", error);
+    process.exit(1);
   }
 }
 
-async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function run() {
-  const rawData = fs.readFileSync('scrapedVideoLinks.json', 'utf-8');
-  // Parse the JSON data  
-  const scrapedVideoUrls: string[] = JSON.parse(rawData);
-
-  // const videoUrls = await getVideoLinks(CHANNEL_URL);
-  // console.log("videoUrls-->", videoUrls);
-  
-  // const scrapedVideoUrls = [
-  //   "https://www.youtube.com/watch?v=wFw4TovEicE",
-  //   "https://www.youtube.com/watch?v=p76oc2yfcX0",
-  //   "https://www.youtube.com/watch?v=ULDZk6FoAiY"
-  // ]
-
-  if (!scrapedVideoUrls.length) {
-    console.error("No video URLs found. Exiting.");
-    return; // Exit if no URLs found  
-  }
-
-  const articleUrl = "https://www.cnb.cz/cs/dohled-financni-trh/legislativni-zakladna/stanoviska-k-regulaci-financniho-trhu/RS2018-08";
-  await main(scrapedVideoUrls, articleUrl);
-}
-
-// Start the process  
-run().catch(error => {
-  console.error("Unexpected error:", error);
-});
+main();
