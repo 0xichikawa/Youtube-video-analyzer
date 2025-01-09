@@ -1,105 +1,19 @@
-import ytdl from "@distube/ytdl-core";
 import * as fs from "fs";
 import * as path from "path";
-import ffmpeg from "fluent-ffmpeg";
 import youtubedl, { youtubeDl, Payload } from "youtube-dl-exec";
+import { processVideoForTranscription, processAudioForTranscription } from "./deepgram.helpers";
+import { analyzeTranscriptsInParagraphs } from "./llm";
+import { saveToGoogleSheets } from "./googleSheet.helper";
 
-// download video but not converted to mp3, fixing
-// export async function downloadAudio(
-//   videoUrl: string
-// ): Promise<{ audioPath: string; videoId: string }> {
-//   try {
-//     // Create a request agent using cookies  
-//     const agent = ytdl.createAgent(
-//       JSON.parse(fs.readFileSync(path.join(__dirname, 'cookies.json'), 'utf-8'))
-//     );
+interface FailedVideo {
+  url: string;
+  error: string;
+  timestamp: string;
+}
 
-//     // Fetch video information  
-//     const videoInfo = await ytdl.getInfo(videoUrl, { agent });
-//     const videoId = videoInfo.videoDetails.videoId;
+const FAILED_VIDEOS_FILE = 'failed_videos.json';
 
-//     // Prepare the data directory  
-//     const dataDir = path.join(__dirname, '..', 'data');
-//     if (!fs.existsSync(dataDir)) {
-//       fs.mkdirSync(dataDir, { recursive: true });
-//     }
-
-//     const tempVideoPath = path.join(dataDir, `${videoId}.mp4`);
-//     const finalAudioPath = path.join(dataDir, `${videoId}.mp3`);
-
-//     console.log(`Temp Video Path: ${tempVideoPath}`);
-//     console.log(`Final Audio Path: ${finalAudioPath}`);
-
-//     // Check if audio file already exists  
-//     if (fs.existsSync(finalAudioPath)) {
-//       console.log("Audio file already exists.");
-//       return { audioPath: finalAudioPath, videoId };
-//     }
-
-//     // Step 1: Download video  
-//     await new Promise<void>((resolve, reject) => {
-//       const stream = ytdl(videoUrl, {
-//         agent,
-//         quality: 'highest', // Uncomment if you want to specify quality  
-//       });
-
-//       let lastPercent = 0;
-//       stream.on('progress', (_, downloaded, total) => {
-//         const percent = Math.floor((downloaded / total) * 100);
-//         if (percent > lastPercent) {
-//           lastPercent = percent;
-//           console.log(`Downloading video: ${percent}%`);
-//         }
-//       });
-
-//       const writeStream = fs.createWriteStream(tempVideoPath);
-//       stream.pipe(writeStream)
-//         .on('finish', () => {
-//           console.log('Video download completed');
-//           resolve();
-//         })
-//         .on('error', (writeError) => {
-//           console.error('Error writing video to file:', writeError);
-//           reject(writeError);
-//         });
-//     });
-
-//     // Step 2: Convert to MP3  
-//     await new Promise<void>((resolve, reject) => {
-//       const inputStream = fs.createReadStream(tempVideoPath);
-//       ffmpeg(inputStream)  // Use the temporary MP4 file as input  
-//         .audioCodec('libmp3lame') // Use the MP3 codec  
-//         .toFormat('mp3')     // Specify MP3 output format  
-//         .audioBitrate('192k') // Set audio bitrate to 192 kbps  
-//         .audioChannels(2)     // Set output to stereo  
-//         .audioFrequency(44100) // Set sample rate to 44.1 kHz  
-//         .outputOptions('-y')   // Overwrite output file if it exists  
-//         .on('progress', (progress) => {
-//           const percent = progress.percent || 0;
-//           console.log(`Converting to MP3: ${Math.round(percent)}%`);
-//         })
-//         .on('end', () => {
-//           // Clean up temporary video file  
-//           fs.unlinkSync(tempVideoPath);
-//           console.log('Conversion completed');
-//           resolve();
-//         })
-//         .on('error', (ffmpegError) => {
-//           console.error('FFmpeg error:', ffmpegError);
-//           reject(ffmpegError);
-//         })
-//         .save(finalAudioPath); // Save output to final audio path  
-//     });
-
-//     return { audioPath: finalAudioPath, videoId };
-
-//   } catch (error) {
-//     console.error('Error in downloadAudio:', error); // Log general errors  
-//     throw error; // Rethrow the error for further handling  
-//   }
-// }
-
-export async function downloadAudio(videoUrl: string): Promise<{ audioPath: string, videoId: string }> {
+export async function downloadAudio(videoUrl: string): Promise<{ audioPath: string, id: string }> {
   try {
     const videoId = videoUrl.split('v=')[1].split('&')[0];
 
@@ -132,7 +46,7 @@ export async function downloadAudio(videoUrl: string): Promise<{ audioPath: stri
       });
     }
     await subprocess;
-    return { audioPath: finalAudioPath, videoId };
+    return { audioPath: finalAudioPath, id:videoId };
   } catch (error) {
     console.error('Error in downloadAudio:', error);
     throw error;
@@ -192,4 +106,98 @@ export async function getVideoLinks(channelUrl: string): Promise<string[]> {
     console.error('Error fetching video links:', error);
     throw error; // Rethrow the error after logging it
   }
+}
+
+function saveFailedVideo(videoUrl: string, error: string) {
+  let failedVideos: FailedVideo[] = [];
+
+  if (fs.existsSync(FAILED_VIDEOS_FILE)) {
+    failedVideos = JSON.parse(fs.readFileSync(FAILED_VIDEOS_FILE, 'utf-8'));
+  }
+
+  failedVideos.push({
+    url: videoUrl,
+    error: error.toString(),
+    timestamp: new Date().toISOString()
+  });
+
+  fs.writeFileSync(FAILED_VIDEOS_FILE, JSON.stringify(failedVideos, null, 2));
+}
+
+export async function processSingleVideo(videoUrl: string, extractedRules: string[], maxRetries = 3): Promise<boolean> {
+  let audioFilePath: string | undefined;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { paragraphs, id, audioPath } = await processVideoForTranscription(videoUrl);
+      audioFilePath = audioPath;
+      console.log("Processing completed for video:", id);
+
+      const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
+      const sheetsData = results.map(result => ({
+        id,
+        transcript: result.transcript,
+        violated_reason: result.violatedReason,
+        start: result.start,
+        end: result.end,
+        video_link: videoUrl
+      }));
+
+      // await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_YOUTUBE);
+      console.log("sheetsData--->" ,sheetsData);
+
+      if (audioFilePath && fs.existsSync(audioFilePath)) {
+        fs.unlinkSync(audioFilePath);
+        console.log(`Deleted audio file: ${audioFilePath}`);
+      }
+      return true;
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed for video ${videoUrl}:`, error);
+      if (attempt === maxRetries) {
+        saveFailedVideo(videoUrl, error instanceof Error ? error.message : String(error));
+        return false;
+      }
+      const delay = Math.pow(2, attempt) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  return false;
+}
+
+export async function processSingleAudio(audioFile: string, extractedRules: string[], maxRetries = 3): Promise<boolean> {
+  let audioFilePath: string | undefined;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { paragraphs, id, audioPath } = await processAudioForTranscription(audioFile);
+      audioFilePath = audioPath;
+      console.log("Processing completed for video:", id);
+
+      const { results } = await analyzeTranscriptsInParagraphs(paragraphs, extractedRules);
+      const sheetsData = results.map(result => ({
+        id: id,
+        transcript: result.transcript,
+        violated_reason: result.violatedReason,
+        start: result.start,
+        end: result.end,
+        video_link: `https://www.patreon.com/posts/${id}`
+      }));
+
+      // await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_PATREON);
+      console.log("sheetsData--->" ,sheetsData);
+
+      if (audioFilePath && fs.existsSync(audioFilePath)) {
+        fs.unlinkSync(audioFilePath);
+        console.log(`Deleted audio file: ${audioFilePath}`);
+      }
+      return true;
+    } catch (error) {
+      console.error(`Attempt ${attempt} failed for video ${audioFile}:`, error);
+      if (attempt === maxRetries) {
+        saveFailedVideo(audioFile, error instanceof Error ? error.message : String(error));
+        return false;
+      }
+      const delay = Math.pow(2, attempt) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  return false;
 }
