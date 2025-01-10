@@ -142,7 +142,12 @@ export async function processSingleVideo(videoUrl: string, extractedRules: strin
         video_link: videoUrl
       }));
 
-      // await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_YOUTUBE);
+
+      if (process.env.SHEET_NAME_YOUTUBE) {
+        await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_YOUTUBE);
+      } else {
+        console.error("SHEET_NAME_YOUTUBE is not defined in the environment variables");
+      }
       console.log("sheetsData--->" ,sheetsData);
 
       if (audioFilePath && fs.existsSync(audioFilePath)) {
@@ -181,7 +186,11 @@ export async function processSingleAudio(audioFile: string, extractedRules: stri
         video_link: `https://www.patreon.com/posts/${id}`
       }));
 
-      // await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_PATREON);
+      if (process.env.SHEET_NAME_PATREON) {
+        await saveToGoogleSheets(sheetsData, process.env.SHEET_NAME_PATREON);
+      } else {
+        console.error("SHEET_NAME_PATREON is not defined in the environment variables");
+      }
       console.log("sheetsData--->" ,sheetsData);
 
       if (audioFilePath && fs.existsSync(audioFilePath)) {
@@ -190,7 +199,7 @@ export async function processSingleAudio(audioFile: string, extractedRules: stri
       }
       return true;
     } catch (error) {
-      console.error(`Attempt ${attempt} failed for video ${audioFile}:`, error);
+      console.error(`Attempt ${attempt} failed for audio ${audioFile}:`, error);
       if (attempt === maxRetries) {
         saveFailedVideo(audioFile, error instanceof Error ? error.message : String(error));
         return false;
