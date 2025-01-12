@@ -3,7 +3,7 @@ import * as path from "path";
 import dotenv from "dotenv";
 import { extractLegalRules } from "./src/article.helper";
 import { processSingleVideo, processSingleAudio } from "./src/youtube.helpers";
-import { delay } from "./src/utils/delay";
+import { delay } from "./src/utils";
 import { processAudioForTranscription } from "./src/deepgram.helpers";
 
 dotenv.config();

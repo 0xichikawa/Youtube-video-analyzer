@@ -4,6 +4,7 @@ import youtubedl, { youtubeDl, Payload } from "youtube-dl-exec";
 import { processVideoForTranscription, processAudioForTranscription } from "./deepgram.helpers";
 import { analyzeTranscriptsInParagraphs } from "./llm";
 import { saveToGoogleSheets } from "./googleSheet.helper";
+import { timeStamp } from "console";
 
 interface FailedVideo {
   url: string;
@@ -139,7 +140,8 @@ export async function processSingleVideo(videoUrl: string, extractedRules: strin
         violated_reason: result.violatedReason,
         start: result.start,
         end: result.end,
-        video_link: videoUrl
+        video_link: videoUrl,
+        timestamp_link: `https://www.youtube.com/watch?v=${id}&t=${result.start}`,
       }));
 
 
@@ -183,7 +185,8 @@ export async function processSingleAudio(audioFile: string, extractedRules: stri
         violated_reason: result.violatedReason,
         start: result.start,
         end: result.end,
-        video_link: `https://www.patreon.com/posts/${id}`
+        video_link: `https://www.patreon.com/posts/${id}`,
+        timestamp_link: `https://www.patreon.com/posts/${id}`,
       }));
 
       if (process.env.SHEET_NAME_PATREON) {
